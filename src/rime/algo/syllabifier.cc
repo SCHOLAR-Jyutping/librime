@@ -104,6 +104,11 @@ int Syllabifier::BuildSyllableGraph(const string& input,
             // spelling-to-syllable map
             if (corrector_ && exact_match_syllables.find(m.value) ==
                                   exact_match_syllables.end()) {
+              // Accept normal spellings only.
+              if (props.type != kNormalSpelling) {
+                  accessor.Next();
+                  continue;
+              }
               props.is_correction = true;
               props.credibility = kCorrectionCredibility;
             }
