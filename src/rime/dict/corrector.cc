@@ -13,10 +13,42 @@
 #include <rime/service.h>
 #include <rime/ticket.h>
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 using namespace rime;
 using namespace corrector;
 
 static hash_map<char, hash_set<char>> keyboard_map = {
+#if defined(__APPLE__) && TARGET_OS_IPHONE || defined(__ANDROID__)
+    {'q', {'w'}},
+    {'w', {'q', 'e'}},
+    {'e', {'w', 'r'}},
+    {'r', {'e', 't'}},
+    {'t', {'r', 'y'}},
+    {'y', {'t', 'u'}},
+    {'u', {'y', 'i'}},
+    {'i', {'u', 'o'}},
+    {'o', {'i', 'p'}},
+    {'p', {'o'}},
+    {'a', {'s', 'q', 'w'}},
+    {'s', {'a', 'd', 'w', 'e', 'z'}},
+    {'d', {'s', 'f', 'e', 'r', 'x'}},
+    {'f', {'d', 'g', 'r', 't', 'c'}},
+    {'g', {'f', 'h', 't', 'y', 'v'}},
+    {'h', {'g', 'j', 'y', 'u', 'b'}},
+    {'j', {'h', 'k', 'u', 'i', 'n'}},
+    {'k', {'j', 'l', 'i', 'o', 'm'}},
+    {'l', {'k', 'o', 'p'}},
+    {'z', {'x', 's'}},
+    {'x', {'z', 'c', 'd'}},
+    {'c', {'x', 'v', 'f'}},
+    {'v', {'c', 'b', 'g'}},
+    {'b', {'v', 'n', 'h'}},
+    {'n', {'b', 'm', 'j'}},
+    {'m', {'n', 'k'}},
+#else
     {'1', {'2', 'q', 'w'}},
     {'2', {'1', '3', 'q', 'w', 'e'}},
     {'3', {'2', '4', 'w', 'e', 'r'}},
@@ -63,6 +95,7 @@ static hash_map<char, hash_set<char>> keyboard_map = {
     {',', {'m', '.'}},
     {'.', {',', '/'}},
     {'/', {'.'}},
+#endif
 };
 
 void DFSCollect(const string& origin,
