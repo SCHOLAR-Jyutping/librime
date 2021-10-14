@@ -295,6 +295,8 @@ void Syllabifier::CheckOverlappedSpellings(SyllableGraph* graph,
 }
 
 void Syllabifier::Transpose(SyllableGraph* graph) {
+  graph->indices.clear();
+  graph->indices.resize(graph->interpreted_length);
   for (const auto& start : graph->edges) {
     auto& index(graph->indices[start.first]);
     for (const auto& end : boost::adaptors::reverse(start.second)) {

@@ -677,9 +677,8 @@ bool Table::Query(const SyllableGraph& syll_graph,
     const bool isRegularSpelling = q.front().isRegularSpelling;
     const bool hasNoEntry = q.front().hasNoEntry;
     q.pop();
-    auto index = syll_graph.indices.find(current_pos);
-    if (index == syll_graph.indices.end()) {
-      if (current_pos == syll_graph.interpreted_length && with_completion) {
+    if (current_pos == syll_graph.interpreted_length) {
+      if (with_completion) {
         if (isRegularSpelling && query.level() >= 2) {
           query.AccessAll(predictAccessors);
         } else if (hasNoEntry) {
@@ -688,6 +687,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
       }
       continue;
     }
+    auto& index = syll_graph.indices[current_pos];
     if (query.level() == Code::kIndexCodeMaxLength) {
       TableAccessor accessor(query.Access(-1));
       if (!accessor.exhausted()) {
@@ -695,7 +695,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
       }
       continue;
     }
-    for (const auto& spellings : index->second) {
+    for (const auto& spellings : index) {
       SyllableId syll_id = spellings.first;
       for (auto props : spellings.second) {
         TableAccessor accessor(query.Access(syll_id, props->credibility));

@@ -32,7 +32,7 @@ using EdgeMap = map<size_t, EndVertexMap>;
 
 using SpellingPropertiesList = vector<const EdgeProperties*>;
 using SpellingIndex = map<SyllableId, SpellingPropertiesList>;
-using SpellingIndices = map<size_t, SpellingIndex>;
+using SpellingIndices = vector<SpellingIndex>;
 
 struct SyllableGraph {
   size_t input_length = 0;
