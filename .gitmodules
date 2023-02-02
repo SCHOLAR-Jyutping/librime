@@ -16,3 +16,6 @@
 [submodule "opencc"]
 	path = deps/opencc
 	url = https://github.com/BYVoid/OpenCC.git
+[submodule "plugins/rime-dictionary-lookup-filter"]
+	path = plugins/rime-dictionary-lookup-filter
+	url = https://github.com/SCHOLAR-Jyutping/rime-dictionary-lookup-filter.git
