@@ -149,7 +149,8 @@ class Table : public MappedFile {
   RIME_API TableAccessor QueryPhrases(const Code& code);
   RIME_API bool Query(const SyllableGraph& syll_graph,
                       size_t start_pos,
-                      TableQueryResult* result);
+                      TableQueryResult* result,
+                      bool with_completion = false);
   RIME_API string GetEntryText(const table::Entry& entry);
 
   uint32_t dict_file_checksum() const;

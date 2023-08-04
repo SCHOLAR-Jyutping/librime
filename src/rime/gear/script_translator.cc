@@ -48,8 +48,8 @@ struct SyllabifyTask {
 static bool syllabify_dfs(SyllabifyTask* task,
                           size_t depth,
                           size_t current_pos) {
-  if (depth == task->code.size()) {
-    return current_pos == task->target_pos;
+  if (current_pos == task->target_pos) {
+    return true;
   }
   SyllableId syllable_id = task->code.at(depth);
   auto z = task->graph.edges.find(current_pos);
@@ -144,6 +144,7 @@ class ScriptTranslation : public Translation {
   an<Sentence> sentence_;
 
   an<Phrase> candidate_ = nullptr;
+  an<Phrase> prediction_ = nullptr;
 
   DictEntryCollector::reverse_iterator phrase_iter_;
   UserDictEntryCollector::reverse_iterator user_phrase_iter_;
@@ -151,6 +152,7 @@ class ScriptTranslation : public Translation {
   size_t max_corrections_ = 4;
   size_t correction_count_ = 0;
 
+  bool first_cand_ = true;
   bool enable_correction_;
 };
 
@@ -344,12 +346,20 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
   size_t consumed = syllabifier_->BuildSyllableGraph(*dict->prism());
   const auto& syllable_graph = syllabifier_->syllable_graph();
 
-  phrase_ = dict->Lookup(syllable_graph, 0);
+  phrase_ = dict->Lookup(syllable_graph, 0, 0, true);
   if (user_dict) {
     user_phrase_ = user_dict->Lookup(syllable_graph, 0);
   }
   if (!phrase_ && !user_phrase_)
     return false;
+  if (!(*phrase_)[-1].exhausted()) {
+    const auto& entry = (*phrase_)[-1].Peek();
+    prediction_ = New<Phrase>(translator_->language(), "predicted_phrase", start_,
+                              start_ + syllable_graph.interpreted_length, entry);
+    prediction_->set_quality(std::exp(entry->weight) +
+                             translator_->initial_quality());
+  }
+  phrase_->erase(-1);
   // make sentences when there is no exact-matching phrase candidate
   size_t translated_len = 0;
   if (phrase_ && !phrase_->empty())
@@ -369,6 +379,7 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
 }
 
 bool ScriptTranslation::Next() {
+  first_cand_ = false;
   bool is_correction;
   do {
     is_correction = false;
@@ -376,6 +387,10 @@ bool ScriptTranslation::Next() {
       return false;
     if (sentence_) {
       sentence_.reset();
+      return !CheckEmpty();
+    }
+    if (prediction_ && candidate_ == prediction_) {
+      prediction_.reset();
       return !CheckEmpty();
     }
     int user_phrase_code_length = 0;
@@ -477,7 +492,13 @@ void ScriptTranslation::PrepareCandidate() {
     cand->set_quality(std::exp(entry->weight) + translator_->initial_quality() +
                       (IsNormalSpelling() ? 0 : -1));
   }
-  candidate_ = cand;
+  candidate_ =
+      prediction_ && !first_cand_ &&
+              (!cand || prediction_->weight() > cand->weight() ||
+               (std::max)(user_phrase_code_length, phrase_code_length) <
+                   syllabifier_->syllable_graph().interpreted_length)
+          ? prediction_
+          : cand;
 }
 
 bool ScriptTranslation::CheckEmpty() {

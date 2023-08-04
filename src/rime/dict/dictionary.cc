@@ -16,6 +16,8 @@
 
 namespace rime {
 
+const double kPredictionThreshold = 3.4011973816621555; // log(30)
+
 namespace dictionary {
 
 struct Chunk {
@@ -199,17 +201,28 @@ static void lookup_table(Table* table,
                          DictEntryCollector* collector,
                          const SyllableGraph& syllable_graph,
                          size_t start_pos,
-                         double initial_credibility) {
+                         double initial_credibility,
+                         bool with_completion) {
   TableQueryResult result;
-  if (!table->Query(syllable_graph, start_pos, &result)) {
+  if (!table->Query(syllable_graph, start_pos, &result, with_completion)) {
     return;
   }
   // copy result
+  dictionary::Chunk predict;
   for (auto& v : result) {
     size_t end_pos = v.first;
     for (TableAccessor& a : v.second) {
       double cr = initial_credibility + a.credibility();
-      if (a.extra_code()) {
+      if (end_pos == -1) {
+        do {
+          auto entry = a.entry();
+          if (!predict.entries ||
+              cr + entry->weight > predict.credibility +
+              predict.entries[predict.cursor].weight) {
+            predict = {table, a.code(), entry, cr};
+          }
+        } while (a.Next());
+      } else if (a.extra_code()) {
         do {
           size_t actual_end_pos = dictionary::match_extra_code(
               a.extra_code(), 0, syllable_graph, end_pos);
@@ -223,11 +236,16 @@ static void lookup_table(Table* table,
       }
     }
   }
+  if (predict.entries &&
+      predict.entries[predict.cursor].weight >= kPredictionThreshold) {
+    (*collector)[-1].AddChunk(std::move(predict));
+  }
 }
 
 an<DictEntryCollector> Dictionary::Lookup(const SyllableGraph& syllable_graph,
                                           size_t start_pos,
-                                          double initial_credibility) {
+                                          double initial_credibility,
+                                          bool with_completion) {
   if (!loaded())
     return nullptr;
   auto collector = New<DictEntryCollector>();
@@ -235,7 +253,7 @@ an<DictEntryCollector> Dictionary::Lookup(const SyllableGraph& syllable_graph,
     if (!table->IsOpen())
       continue;
     lookup_table(table.get(), collector.get(), syllable_graph, start_pos,
-                 initial_credibility);
+                 initial_credibility, with_completion);
   }
   if (collector->empty())
     return nullptr;

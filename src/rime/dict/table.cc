@@ -26,6 +26,7 @@ class TableQuery {
   TableQuery(table::Index* index) : lv1_index_(index) { Reset(); }
 
   TableAccessor Access(SyllableId syllable_id, double credibility = 0.0) const;
+  void AccessAll(vector<TableAccessor>& accessors, double credibility = 0.0);
 
   // down to next level
   bool Advance(SyllableId syllable_id, double credibility = 0.0);
@@ -50,6 +51,13 @@ class TableQuery {
   table::TrunkIndex* lv2_index_ = nullptr;
   table::TrunkIndex* lv3_index_ = nullptr;
   table::TailIndex* lv4_index_ = nullptr;
+};
+
+struct QueryQueue {
+  size_t pos;
+  TableQuery query;
+  bool isRegularSpelling;
+  bool hasNoEntry;
 };
 
 TableAccessor::TableAccessor(const Code& index_code,
@@ -229,6 +237,77 @@ TableAccessor TableQuery::Access(SyllableId syllable_id,
     return TableAccessor(index_code_, lv4_index_, credibility);
   }
   return TableAccessor();
+}
+
+void TableQuery::AccessAll(vector<TableAccessor>& accessors, double credibility) {
+  credibility += credibility_.back();
+  if (level_ == 0) {
+    if (!lv1_index_)
+      return;
+    for (size_t i = 0; i < lv1_index_->size; i++) {
+      auto node = &lv1_index_->at[i];
+      TableAccessor accessor(add_syllable(index_code_, i),
+                             &node->entries, credibility);
+      if (!accessor.exhausted())
+        accessors.push_back(accessor);
+      if (!node->next_level)
+        continue;
+      lv2_index_ = &node->next_level->trunk();
+      ++level_;
+      index_code_.push_back(i);
+      credibility_.push_back(credibility);
+      AccessAll(accessors, credibility);
+      --level_;
+      index_code_.pop_back();
+      credibility_.pop_back();
+    }
+  } else if (level_ == 1) {
+    if (!lv2_index_)
+      return;
+    for (size_t i = 0; i < lv2_index_->size; i++) {
+      auto node = &lv2_index_->at[i];
+      TableAccessor accessor(add_syllable(index_code_, node->key),
+                             &node->entries, credibility);
+      if (!accessor.exhausted())
+        accessors.push_back(accessor);
+      if (!node->next_level)
+        continue;
+      lv3_index_ = &node->next_level->trunk();
+      ++level_;
+      index_code_.push_back(node->key);
+      credibility_.push_back(credibility);
+      AccessAll(accessors, credibility);
+      --level_;
+      index_code_.pop_back();
+      credibility_.pop_back();
+    }
+  } else if (level_ == 2) {
+    if (!lv3_index_)
+      return;
+    for (size_t i = 0; i < lv3_index_->size; i++) {
+      auto node = &lv3_index_->at[i];
+      TableAccessor accessor(add_syllable(index_code_, node->key),
+                             &node->entries, credibility);
+      if (!accessor.exhausted())
+        accessors.push_back(accessor);
+      if (!node->next_level)
+        continue;
+      lv4_index_ = &node->next_level->tail();
+      ++level_;
+      index_code_.push_back(node->key);
+      credibility_.push_back(credibility);
+      AccessAll(accessors, credibility);
+      --level_;
+      index_code_.pop_back();
+      credibility_.pop_back();
+    }
+  } else if (level_ == 3) {
+    if (!lv4_index_)
+      return;
+    TableAccessor accessor(index_code_, lv4_index_, credibility);
+    if (!accessor.exhausted())
+      accessors.push_back(accessor);
+  }
 }
 
 // string Table::GetString_v1(const table::StringType& x) {
@@ -582,19 +661,31 @@ TableAccessor Table::QueryPhrases(const Code& code) {
 
 bool Table::Query(const SyllableGraph& syll_graph,
                   size_t start_pos,
-                  TableQueryResult* result) {
+                  TableQueryResult* result,
+                  bool with_completion) {
   if (!result || !index_ || start_pos >= syll_graph.interpreted_length)
     return false;
   result->clear();
-  std::queue<pair<size_t, TableQuery>> q;
+  std::vector<TableAccessor>& predictAccessors = (*result)[-1];
+  std::queue<QueryQueue> q;
+  std::vector<TableQuery> deferred;
   TableQuery initial_state(index_);
-  q.push({start_pos, initial_state});
+  q.push({start_pos, initial_state, true, false});
   while (!q.empty()) {
-    size_t current_pos = q.front().first;
-    TableQuery query(q.front().second);
+    size_t current_pos = q.front().pos;
+    TableQuery query(q.front().query);
+    const bool isRegularSpelling = q.front().isRegularSpelling;
+    const bool hasNoEntry = q.front().hasNoEntry;
     q.pop();
     auto index = syll_graph.indices.find(current_pos);
     if (index == syll_graph.indices.end()) {
+      if (current_pos == syll_graph.interpreted_length && with_completion) {
+        if (isRegularSpelling && query.level() >= 2) {
+          query.AccessAll(predictAccessors);
+        } else if (hasNoEntry) {
+          deferred.push_back(query);
+        }
+      }
       continue;
     }
     if (query.level() == Code::kIndexCodeMaxLength) {
@@ -612,14 +703,25 @@ bool Table::Query(const SyllableGraph& syll_graph,
         if (!accessor.exhausted()) {
           (*result)[end_pos].push_back(accessor);
         }
-        if (end_pos < syll_graph.interpreted_length &&
-            query.Advance(syll_id, props->credibility)) {
-          q.push({end_pos, query});
+        if (query.Advance(syll_id, props->credibility)) {
+          q.push({end_pos, query,
+                  isRegularSpelling && props->type == kNormalSpelling,
+                  accessor.exhausted()});
           query.Backdate();
         }
       }
     }
   }
+  std::vector<TableAccessor>& endAccessors =
+      (*result)[syll_graph.interpreted_length];
+  if (endAccessors.empty()) {
+    for (TableQuery& query : deferred)
+      query.AccessAll(endAccessors);
+    if (endAccessors.empty())
+      result->erase(syll_graph.interpreted_length);
+  }
+  if (predictAccessors.empty())
+    result->erase(-1);
   return !result->empty();
 }
 
