@@ -119,15 +119,19 @@ inline an<Translation> Cached(Args&&... args) {
   return New<CacheTranslation>(New<T>(std::forward<Args>(args)...));
 }
 
-class DistinctTranslation : public CacheTranslation {
+class DistinctTranslation : public Translation {
  public:
   DistinctTranslation(an<Translation> translation);
+
   virtual bool Next();
+  virtual an<Candidate> Peek();
 
  protected:
-  bool AlreadyHas(const string& text) const;
+  bool DistinctTranslation::AlreadyHas(const pair<string, string>& candidate) const;
 
-  set<string> candidate_set_;
+  set<pair<string, string> > candidate_set_;
+  an<Translation> translation_;
+  an<Candidate> cache_;
 };
 
 class PrefetchTranslation : public Translation {

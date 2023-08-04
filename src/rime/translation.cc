@@ -6,6 +6,7 @@
 //
 #include <rime/candidate.h>
 #include <rime/translation.h>
+#include <rime/gear/translator_commons.h>
 
 namespace rime {
 
@@ -203,21 +204,62 @@ an<Candidate> CacheTranslation::Peek() {
 // DistinctTranslation
 
 DistinctTranslation::DistinctTranslation(an<Translation> translation)
-    : CacheTranslation(translation) {}
+    : translation_(New<CacheTranslation>(translation)) {
+  set_exhausted(!translation_ || translation_->exhausted());
+}
+
+an<Candidate> DistinctTranslation::Peek() {
+  if (exhausted())
+    return nullptr;
+  if (cache_ || Next())
+    return cache_;
+  return nullptr;
+}
 
 bool DistinctTranslation::Next() {
   if (exhausted())
     return false;
-  candidate_set_.insert(Peek()->text());
-  do {
-    CacheTranslation::Next();
-  } while (!exhausted() &&
-           AlreadyHas(Peek()->text()));  // skip duplicate candidates
+  while (true) {
+    cache_ = translation_->Peek();
+    translation_->Next();
+    if (!cache_) {
+      set_exhausted(true);
+      return false;
+    }
+    pair<string, string> pair = {cache_->text(), cache_->comment()};
+    if (!AlreadyHas(pair)) {
+      candidate_set_.insert(pair);
+      break;
+    }
+  }
+  an<Phrase> phrase = As<Phrase>(Candidate::GetGenuineCandidate(cache_));
+  if (phrase) {
+    string comment = phrase->comment();
+    while (!translation_->exhausted()) {
+      an<Candidate> cand = translation_->Peek();
+      pair<string, string> pair = {cand->text(), cand->comment()};
+      if (AlreadyHas(pair)) {
+        translation_->Next();
+        continue;
+      }
+      if (cand->text() == phrase->text()) {
+        comment += (comment.empty() || cand->comment().empty() ? "" : "; ") + cand->comment();
+        translation_->Next();
+        candidate_set_.insert(pair);
+      } else {
+        break;
+      }
+    }
+    phrase->set_comment(comment);
+  }
+  if (translation_->exhausted()) {
+    set_exhausted(true);
+  }
   return true;
 }
 
-bool DistinctTranslation::AlreadyHas(const string& text) const {
-  return candidate_set_.find(text) != candidate_set_.end();
+bool DistinctTranslation::AlreadyHas(const pair<string, string>& candidate) const {
+  return candidate_set_.find(candidate) != candidate_set_.end();
 }
 
 // PrefetchTranslation
