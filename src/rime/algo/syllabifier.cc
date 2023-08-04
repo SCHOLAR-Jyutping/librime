@@ -19,8 +19,10 @@ using Vertex = pair<size_t, SpellingType>;
 using VertexQueue =
     std::priority_queue<Vertex, vector<Vertex>, std::greater<Vertex>>;
 
-const double kCompletionPenalty = -0.6931471805599453;     // log(0.5)
-const double kCorrectionCredibility = -4.605170185988091;  // log(0.01)
+const double kCompletionPenalty = -0.6931471805599453;            // log(0.5)
+const double kPenaltyForAmbiguousSyllable = -2.3025850929940455;  // log(0.1)
+const double kCorrectionCredibility = -16.11809565095832;         // log(1e-7)
+const double kPenaltyForDisfavoredType = -32.23619130191664;      // log(1e-14)
 
 int Syllabifier::BuildSyllableGraph(const string& input,
                                     Prism& prism,
@@ -147,34 +149,48 @@ int Syllabifier::BuildSyllableGraph(const string& input,
     if (graph->vertices.find(i) == graph->vertices.end())
       continue;
     // remove stale edges
-    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end();) {
+    size_t max_end = 0;
+    SpellingType min_edge_type = kInvalidSpelling;
+    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end(); ++j) {
       if (good.find(j->first) == good.end()) {
         // not connected
-        graph->edges[i].erase(j++);
+        graph->edges[i].erase(j);
         continue;
       }
-      // remove disqualified syllables (eg. matching abbreviated spellings)
+      if (j->first > max_end) {
+        max_end = j->first;
+      }
+      for (auto k = j->second.begin(); k != j->second.end(); ++k) {
+        if (k->second.is_correction) {
+          continue;  // Don't care correction edges
+        }
+        if (k->second.type < min_edge_type) {
+          min_edge_type = k->second.type;
+        }
+      }
+    }
+    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end(); ++j) {
+      // penalize syllables (eg. matching abbreviated spellings)
       // when there is a path of more favored type
       SpellingType edge_type = kInvalidSpelling;
-      for (auto k = j->second.begin(); k != j->second.end();) {
+      for (auto k = j->second.begin(); k != j->second.end(); ++k) {
         if (k->second.is_correction) {
-          ++k;
           continue;  // Don't care correction edges
         }
         if (k->second.type > last_type) {
-          j->second.erase(k++);
-        } else {
-          if (k->second.type < edge_type)
-            edge_type = k->second.type;
-          ++k;
+          if (j->first < max_end && k->second.type > min_edge_type) {
+            j->second.erase(k);
+          } else {
+            k->second.credibility += kPenaltyForDisfavoredType;
+          }
+        } else if (k->second.type < edge_type) {
+          edge_type = k->second.type;
         }
       }
       if (j->second.empty()) {
-        graph->edges[i].erase(j++);
-      } else {
-        if (edge_type < kAbbreviation)
-          CheckOverlappedSpellings(graph, i, j->first);
-        ++j;
+        graph->edges[i].erase(j);
+      } else if (edge_type < kAbbreviation) {
+        CheckOverlappedSpellings(graph, i, j->first);
       }
     }
     if (graph->vertices[i] > last_type || graph->edges[i].empty()) {
@@ -243,8 +259,6 @@ int Syllabifier::BuildSyllableGraph(const string& input,
 void Syllabifier::CheckOverlappedSpellings(SyllableGraph* graph,
                                            size_t start,
                                            size_t end) {
-  const double kPenaltyForAmbiguousSyllable =
-      -23.025850929940457;  // log(1e-10)
   if (!graph || graph->edges.find(start) == graph->edges.end())
     return;
   // if "Z" = "YX", mark the vertex between Y and X an ambiguous syllable joint
