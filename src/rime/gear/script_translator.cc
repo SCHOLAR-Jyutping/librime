@@ -118,7 +118,7 @@ class ScriptTranslation : public Translation {
         start_(start),
         syllabifier_(
             New<ScriptSyllabifier>(translator, corrector, input, start)),
-        enable_correction_(corrector) {
+        enable_correction_(corrector || translator->enable_completion()) {
     set_exhausted(true);
   }
   bool Evaluate(Dictionary* dict, UserDictionary* user_dict);
@@ -150,10 +150,10 @@ class ScriptTranslation : public Translation {
   DictEntryCollector::reverse_iterator phrase_iter_;
   UserDictEntryCollector::reverse_iterator user_phrase_iter_;
 
-  size_t max_corrections_ = 4;
+  size_t max_corrections_ = 5;
   size_t correction_count_ = 0;
+  size_t cand_count_ = 0;
 
-  bool first_cand_ = true;
   bool enable_correction_;
 };
 
@@ -175,6 +175,8 @@ ScriptTranslator::ScriptTranslator(const Ticket& ticket)
     if (auto* corrector = Corrector::Require("corrector")) {
       corrector_.reset(corrector->Create(ticket));
     }
+  } else {
+    enable_correction_ = enable_completion();
   }
 }
 
@@ -274,7 +276,7 @@ size_t ScriptSyllabifier::BuildSyllableGraph(Prism& prism) {
 bool ScriptSyllabifier::IsCandidateCorrection(const rime::Phrase& cand) const {
   std::stack<bool> results;
   // Perform DFS on syllable graph to find whether this candidate is a
-  // correction
+  // correction or completion
   SyllabifyTask task{cand.code(), syllable_graph_, cand.end() - start_,
                      [&](SyllabifyTask* task, size_t depth, size_t current_pos,
                          size_t next_pos) {
@@ -289,7 +291,8 @@ bool ScriptSyllabifier::IsCandidateCorrection(const rime::Phrase& cand) const {
                          if (it_e != it_s->second.end()) {
                            auto it_type = it_e->second.find(id);
                            if (it_type != it_e->second.end()) {
-                             results.push(it_type->second.is_correction);
+                             results.push(it_type->second.is_correction ||
+                                          it_type->second.type == kCompletion);
                              return;
                            }
                          }
@@ -392,7 +395,6 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
 }
 
 bool ScriptTranslation::Next() {
-  first_cand_ = false;
   bool is_correction;
   do {
     is_correction = false;
@@ -400,10 +402,12 @@ bool ScriptTranslation::Next() {
       return false;
     if (sentence_) {
       sentence_.reset();
+      ++cand_count_;
       return !CheckEmpty();
     }
     if (prediction_ && candidate_ == prediction_) {
       prediction_.reset();
+      ++cand_count_;
       return !CheckEmpty();
     }
     int phrase_code_length = 0;
@@ -434,6 +438,7 @@ bool ScriptTranslation::Next() {
   if (is_correction) {
     ++correction_count_;
   }
+  ++cand_count_;
   return !CheckEmpty();
 }
 
@@ -469,7 +474,7 @@ bool ScriptTranslation::PreferUserPhrase() {
     user_phrase_code_length = user_phrase_iter_->first;
     UserDictEntryIterator& uter = user_phrase_iter_->second;
     const auto& entry = uter.Peek();
-    user_phrase_weight = entry->weight;
+    user_phrase_weight = entry->weight + pow((double)cand_count_ / 8, 6);
   }
 
   int phrase_code_length = 0;
@@ -522,7 +527,7 @@ void ScriptTranslation::PrepareCandidate() {
                       (IsNormalSpelling() ? 0 : -1));
   }
   candidate_ =
-      prediction_ && !first_cand_ &&
+      prediction_ && cand_count_ &&
               (!cand || prediction_->weight() > cand->weight() ||
                (std::max)(user_phrase_code_length, phrase_code_length) <
                    syllabifier_->syllable_graph().interpreted_length)

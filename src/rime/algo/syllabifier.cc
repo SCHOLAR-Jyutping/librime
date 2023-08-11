@@ -19,9 +19,9 @@ using Vertex = pair<size_t, SpellingType>;
 using VertexQueue =
     std::priority_queue<Vertex, vector<Vertex>, std::greater<Vertex>>;
 
-const double kCompletionPenalty = -0.6931471805599453;            // log(0.5)
-const double kPenaltyForAmbiguousSyllable = -2.3025850929940455;  // log(0.1)
-const double kCorrectionCredibility = -16.11809565095832;         // log(1e-7)
+const double kPenaltyForAmbiguousSyllable = -0.6931471805599453;  // log(0.5)
+const double kCorrectionCredibility = -6.907755278982137;         // log(0.001)
+const double kCompletionPenalty = -16.11809565095832;             // log(1e-7)
 const double kPenaltyForDisfavoredType = -32.23619130191664;      // log(1e-14)
 
 int Syllabifier::BuildSyllableGraph(const string& input,
@@ -62,7 +62,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
         exact_match_syllables.insert(m.value);
       }
       Corrections corrections;
-      corrector_->ToleranceSearch(prism, current_input, &corrections, 5);
+      corrector_->ToleranceSearch(prism, current_input, &corrections, 4);
       for (const auto& m : corrections) {
         for (auto accessor = prism.QuerySpelling(m.first);
              !accessor.exhausted(); accessor.Next()) {
@@ -147,6 +147,15 @@ int Syllabifier::BuildSyllableGraph(const string& input,
   DLOG(INFO) << "remove stale vertices and edges";
   set<int> good;
   good.insert(farthest);
+  size_t normal_farthest = farthest;
+  while (true) {
+    auto it = graph->vertices.find(normal_farthest);
+    if (it == graph->vertices.end())
+      continue;
+    if (it->second == kNormalSpelling)
+      break;
+    --normal_farthest;
+  }
   for (int i = farthest - 1; i >= 0; --i) {
     if (graph->vertices.find(i) == graph->vertices.end())
       continue;
@@ -206,13 +215,14 @@ int Syllabifier::BuildSyllableGraph(const string& input,
     good.insert(i);
   }
 
-  if (enable_completion_ && farthest < input.length()) {
+  if (enable_completion_ && normal_farthest < input.length()) {
     DLOG(INFO) << "completion enabled";
     const size_t kExpandSearchLimit = 512;
     vector<Prism::Match> keys;
-    prism.ExpandSearch(input.substr(farthest), &keys, kExpandSearchLimit);
+    prism.ExpandSearch(input.substr(normal_farthest), &keys,
+                       kExpandSearchLimit);
     if (!keys.empty()) {
-      size_t current_pos = farthest;
+      size_t current_pos = normal_farthest;
       size_t end_pos = input.length();
       size_t code_length = end_pos - current_pos;
       auto& end_vertices(graph->edges[current_pos]);
@@ -244,13 +254,13 @@ int Syllabifier::BuildSyllableGraph(const string& input,
       } else {
         DLOG(INFO) << "added to syllable graph, completion: [" << current_pos
                    << ", " << end_pos << ")";
-        farthest = end_pos;
+        normal_farthest = end_pos;
       }
     }
   }
 
   graph->input_length = input.length();
-  graph->interpreted_length = farthest;
+  graph->interpreted_length = (std::max)(farthest, normal_farthest);
   DLOG(INFO) << "input length: " << graph->input_length;
   DLOG(INFO) << "syllabified length: " << graph->interpreted_length;
 
