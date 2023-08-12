@@ -700,6 +700,9 @@ bool Table::Query(const SyllableGraph& syll_graph,
     for (const auto& spellings : index) {
       SyllableId syll_id = spellings.first;
       for (auto props : spellings.second) {
+        if (!with_completion &&
+            (props->is_correction || props->type == kCompletion))
+          continue;
         TableAccessor accessor(query.Access(syll_id, props->credibility));
         size_t end_pos = props->end_pos;
         if (!accessor.exhausted()) {
