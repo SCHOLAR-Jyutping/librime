@@ -66,8 +66,12 @@ class Phrase : public Candidate {
          const string& type,
          size_t start,
          size_t end,
-         const an<DictEntry>& entry)
-      : Candidate(type, start, end), language_(language), entry_(entry) {}
+         const an<DictEntry>& entry,
+         size_t original_code_length = 0)
+      : Candidate(type, start, end),
+        language_(language),
+        entry_(entry),
+        original_code_length_(original_code_length) {}
   const string& text() const { return entry_->text; }
   string comment() const { return entry_->comment; }
   string preedit() const { return entry_->preedit; }
@@ -78,7 +82,18 @@ class Phrase : public Candidate {
   }
   double weight() const { return entry_->weight; }
   void set_weight(double weight) { entry_->weight = weight; }
-  Code& code() const { return entry_->code; }
+  Code& full_code() const { return entry_->code; }
+  Code code() const {
+    Code& full_code_ = full_code();
+    if (!original_code_length_)
+      return full_code_;
+    Code code;
+    code.insert(code.end(), full_code_.begin(),
+                original_code_length_
+                    ? full_code_.begin() + original_code_length_
+                    : full_code_.end());
+    return code;
+  }
   const DictEntry& entry() const { return *entry_; }
   const Language* language() const { return language_; }
   Spans spans() {
@@ -89,6 +104,7 @@ class Phrase : public Candidate {
   const Language* language_;
   an<DictEntry> entry_;
   an<PhraseSyllabifier> syllabifier_;
+  size_t original_code_length_;
 };
 
 //

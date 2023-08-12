@@ -48,8 +48,8 @@ struct SyllabifyTask {
 static bool syllabify_dfs(SyllabifyTask* task,
                           size_t depth,
                           size_t current_pos) {
-  if (current_pos == task->target_pos) {
-    return true;
+  if (depth == task->code.size()) {
+    return current_pos == task->target_pos;
   }
   SyllableId syllable_id = task->code.at(depth);
   auto z = task->graph.edges.find(current_pos);
@@ -338,8 +338,8 @@ string ScriptSyllabifier::GetPreeditString(const Phrase& cand) const {
 
 string ScriptSyllabifier::GetOriginalSpelling(const Phrase& cand) const {
   if (translator_ &&
-      static_cast<int>(cand.code().size()) <= translator_->spelling_hints()) {
-    return translator_->Spell(cand.code());
+      static_cast<int>(cand.full_code().size()) <= translator_->spelling_hints()) {
+    return translator_->Spell(cand.full_code());
   }
   return string();
 }
@@ -356,18 +356,19 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
   }
   if (!phrase_ && !user_phrase_)
     return false;
-  if (!(*phrase_)[-1].exhausted()) {
-    const auto& entry = (*phrase_)[-1].Peek();
+  if (phrase_ && !phrase_->empty() && phrase_->begin()->first < 0) {
+    const auto& entry = phrase_->begin()->second.Peek();
     prediction_ = New<Phrase>(translator_->language(), "predicted_phrase", start_,
-                              start_ + syllable_graph.interpreted_length, entry);
+                              start_ + syllable_graph.interpreted_length, entry,
+                              -phrase_->begin()->first);
     prediction_->set_quality(std::exp(entry->weight) +
                              translator_->initial_quality());
+    phrase_->erase(phrase_->begin()->first);
   }
-  phrase_->erase(-1);
   // make sentences when there is no exact-matching phrase candidate
   size_t translated_len = 0;
   if (phrase_ && !phrase_->empty())
-    translated_len = (std::max)(translated_len, phrase_->rbegin()->first);
+    translated_len = (std::max)(translated_len, (size_t)phrase_->rbegin()->first);
   if (user_phrase_ && !user_phrase_->empty())
     translated_len = (std::max)(translated_len, user_phrase_->rbegin()->first);
 

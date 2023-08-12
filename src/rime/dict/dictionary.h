@@ -51,7 +51,7 @@ class DictEntryIterator : public DictEntryFilterBinder {
   size_t entry_count_ = 0;
 };
 
-using DictEntryCollector = map<size_t, DictEntryIterator>;
+using DictEntryCollector = map<int, DictEntryIterator>;
 
 class Config;
 class Schema;

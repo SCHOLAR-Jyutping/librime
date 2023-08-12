@@ -666,7 +666,6 @@ bool Table::Query(const SyllableGraph& syll_graph,
   if (!result || !index_ || start_pos >= syll_graph.interpreted_length)
     return false;
   result->clear();
-  std::vector<TableAccessor>& predictAccessors = (*result)[-1];
   std::queue<QueryQueue> q;
   std::vector<TableQuery> deferred;
   TableQuery initial_state(index_);
@@ -680,7 +679,10 @@ bool Table::Query(const SyllableGraph& syll_graph,
     if (current_pos == syll_graph.interpreted_length) {
       if (with_completion) {
         if (isRegularSpelling && query.level() >= 2) {
-          query.AccessAll(predictAccessors);
+          std::vector<TableAccessor>& accessors = (*result)[-query.level()];
+          query.AccessAll(accessors);
+          if (accessors.empty())
+            result->erase(-query.level());
         } else if (hasNoEntry) {
           deferred.push_back(query);
         }
@@ -720,8 +722,6 @@ bool Table::Query(const SyllableGraph& syll_graph,
     if (endAccessors.empty())
       result->erase(syll_graph.interpreted_length);
   }
-  if (predictAccessors.empty())
-    result->erase(-1);
   return !result->empty();
 }
 
