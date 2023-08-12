@@ -41,12 +41,16 @@ class ScriptTranslator : public Translator,
   int max_homophones() const { return max_homophones_; }
   int spelling_hints() const { return spelling_hints_; }
   bool always_show_comments() const { return always_show_comments_; }
+  bool enable_sentence() const { return enable_sentence_; }
+  bool encode_commit_history() const { return encode_commit_history_; }
 
  protected:
   int max_homophones_ = 1;
   int spelling_hints_ = 0;
   bool always_show_comments_ = false;
   bool enable_correction_ = false;
+  bool enable_sentence_ = true;
+  bool encode_commit_history_ = true;
   the<Corrector> corrector_;
   the<Poet> poet_;
 };
