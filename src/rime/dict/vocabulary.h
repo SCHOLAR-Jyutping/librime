@@ -49,9 +49,14 @@ struct DictEntry {
   int commit_count = 0;
   int remaining_code_length = 0;
 
+  virtual ~DictEntry() {}
   DictEntry() = default;
   ShortDictEntry ToShort() const;
   bool operator<(const DictEntry& other) const;
+};
+
+struct UserDictEntry : DictEntry {
+  vector<string> elements;
 };
 
 class ShortDictEntryList : public vector<of<ShortDictEntry>> {
@@ -61,6 +66,12 @@ class ShortDictEntryList : public vector<of<ShortDictEntry>> {
 };
 
 class DictEntryList : public vector<of<DictEntry>> {
+ public:
+  void Sort();
+  void SortRange(size_t start, size_t count);
+};
+
+class UserDictEntryList : public vector<of<UserDictEntry>> {
  public:
   void Sort();
   void SortRange(size_t start, size_t count);

@@ -20,6 +20,7 @@
 #include <rime/dict/db.h>
 #include <rime/dict/table.h>
 #include <rime/dict/user_dictionary.h>
+#include <rime/gear/memory.h>
 
 namespace rime {
 
@@ -28,7 +29,7 @@ struct DfsState {
   TickCount present_tick;
   Code code;
   vector<double> credibility;
-  map<int, DictEntryList> query_result;
+  map<int, UserDictEntryList> query_result;
   an<DbAccessor> accessor;
   string key;
   string value;
@@ -76,11 +77,11 @@ void DfsState::RecruitEntry(size_t pos) {
 
 // UserDictEntryIterator members
 
-void UserDictEntryIterator::Add(an<DictEntry>&& entry) {
+void UserDictEntryIterator::Add(an<UserDictEntry>&& entry) {
   cache_.push_back(std::move(entry));
 }
 
-void UserDictEntryIterator::SetEntries(DictEntryList&& entries) {
+void UserDictEntryIterator::SetEntries(UserDictEntryList&& entries) {
   cache_ = std::move(entries);
 }
 
@@ -97,7 +98,7 @@ void UserDictEntryIterator::AddFilter(DictEntryFilter filter) {
   }
 }
 
-an<DictEntry> UserDictEntryIterator::Peek() {
+an<UserDictEntry> UserDictEntryIterator::Peek() {
   if (exhausted()) {
     return nullptr;
   }
@@ -243,7 +244,7 @@ void UserDictionary::DfsLookup(const SyllableGraph& syll_graph,
   }
 }
 
-static an<UserDictEntryCollector> collect(map<int, DictEntryList>* source) {
+static an<UserDictEntryCollector> collect(map<int, UserDictEntryList>* source) {
   auto result = New<UserDictEntryCollector>();
   for (auto& x : *source) {
     (*result)[x.first].SetEntries(std::move(x.second));
@@ -375,6 +376,13 @@ bool UserDictionary::UpdateEntry(const DictEntry& entry,
     v.dee = algo::formula_d(0.0, (double)tick_, v.dee, (double)v.tick);
   }
   v.tick = tick_;
+  if (auto commit_entry = dynamic_cast<const CommitEntry*>(&entry)) {
+    v.elements.clear();
+    v.elements.resize(commit_entry->elements.size());
+    std::transform(commit_entry->elements.begin(), commit_entry->elements.end(),
+                   v.elements.begin(),
+                   [](const DictEntry* e) { return e->text; });
+  }
   return db_->Update(key, v.Pack());
 }
 
@@ -448,12 +456,12 @@ bool UserDictionary::TranslateCodeToString(const Code& code, string* result) {
   return true;
 }
 
-an<DictEntry> UserDictionary::CreateDictEntry(const string& key,
-                                              const string& value,
-                                              TickCount present_tick,
-                                              double credibility,
-                                              string* full_code) {
-  an<DictEntry> e;
+an<UserDictEntry> UserDictionary::CreateDictEntry(const string& key,
+                                                  const string& value,
+                                                  TickCount present_tick,
+                                                  double credibility,
+                                                  string* full_code) {
+  an<UserDictEntry> e;
   size_t separator_pos = key.find('\t');
   if (separator_pos == string::npos)
     return e;
@@ -465,13 +473,14 @@ an<DictEntry> UserDictionary::CreateDictEntry(const string& key,
   if (v.tick < present_tick)
     v.dee = algo::formula_d(0, (double)present_tick, v.dee, (double)v.tick);
   // create!
-  e = New<DictEntry>();
+  e = New<UserDictEntry>();
   e->text = key.substr(separator_pos + 1);
   e->commit_count = v.commits;
   // TODO: argument s not defined...
   double weight = algo::formula_p(0, (double)v.commits / present_tick,
                                   (double)present_tick, v.dee);
   e->weight = log(weight > 0 ? weight : DBL_EPSILON) + credibility;
+  e->elements = v.elements;
   if (full_code) {
     *full_code = key.substr(0, separator_pos);
   }

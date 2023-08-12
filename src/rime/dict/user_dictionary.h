@@ -19,12 +19,12 @@ class UserDictEntryIterator : public DictEntryFilterBinder {
  public:
   UserDictEntryIterator() = default;
 
-  void Add(an<DictEntry>&& entry);
-  void SetEntries(DictEntryList&& entries);
+  void Add(an<UserDictEntry>&& entry);
+  void SetEntries(UserDictEntryList&& entries);
   void SortRange(size_t start, size_t count);
 
   void AddFilter(DictEntryFilter filter) override;
-  an<DictEntry> Peek();
+  an<UserDictEntry> Peek();
   bool Next();
   bool exhausted() const { return index_ >= cache_.size(); }
   size_t cache_size() const { return cache_.size(); }
@@ -32,7 +32,7 @@ class UserDictEntryIterator : public DictEntryFilterBinder {
  protected:
   bool FindNextEntry();
 
-  DictEntryList cache_;
+  UserDictEntryList cache_;
   size_t index_ = 0;
 };
 
@@ -78,11 +78,11 @@ class UserDictionary : public Class<UserDictionary, const Ticket&> {
   const string& name() const { return name_; }
   TickCount tick() const { return tick_; }
 
-  static an<DictEntry> CreateDictEntry(const string& key,
-                                       const string& value,
-                                       TickCount present_tick,
-                                       double credibility = 0.0,
-                                       string* full_code = NULL);
+  static an<UserDictEntry> CreateDictEntry(const string& key,
+                                           const string& value,
+                                           TickCount present_tick,
+                                           double credibility = 0.0,
+                                           string* full_code = NULL);
 
  protected:
   bool Initialize();

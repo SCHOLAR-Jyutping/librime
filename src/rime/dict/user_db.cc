@@ -20,7 +20,10 @@ UserDbValue::UserDbValue(const string& value) {
 }
 
 string UserDbValue::Pack() const {
-  return boost::str(boost::format("c=%1% d=%2% t=%3%") % commits % dee % tick);
+  return boost::str(elements.empty()
+                        ? boost::format("c=%1% d=%2% t=%3%") % commits % dee % tick
+                        : boost::format("c=%1% d=%2% t=%3% e=%4%") %
+                              commits % dee % tick % boost::join(elements, "\t"));
 }
 
 bool UserDbValue::Unpack(const string& value) {
@@ -39,6 +42,9 @@ bool UserDbValue::Unpack(const string& value) {
         dee = (std::min)(10000.0, boost::lexical_cast<double>(v));
       } else if (k == "t") {
         tick = boost::lexical_cast<TickCount>(v);
+      } else if (k == "e") {
+        elements.clear();
+        boost::split(elements, v, boost::is_any_of("\t"));
       }
     } catch (...) {
       LOG(ERROR) << "failed in parsing key-value from userdb entry '" << k_eq_v
@@ -181,6 +187,7 @@ UserDbMerger::UserDbMerger(Db* db) : db_(db) {
   our_tick_ = get_tick_count(db);
   their_tick_ = 0;
   max_tick_ = our_tick_;
+  merged_entries_ = 0;
 }
 
 UserDbMerger::~UserDbMerger() {

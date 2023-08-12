@@ -21,6 +21,7 @@ struct UserDbValue {
   int commits = 0;
   double dee = 0.0;
   TickCount tick = 0;
+  vector<string> elements;
 
   UserDbValue() = default;
   UserDbValue(const string& value);
