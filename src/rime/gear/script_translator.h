@@ -45,8 +45,8 @@ class ScriptTranslator : public Translator,
   bool encode_commit_history() const { return encode_commit_history_; }
 
  protected:
-  int max_homophones_ = 1;
-  int spelling_hints_ = 0;
+  int max_homophones_ = 16;
+  int spelling_hints_ = 4;
   bool always_show_comments_ = false;
   bool enable_correction_ = false;
   bool enable_sentence_ = true;
