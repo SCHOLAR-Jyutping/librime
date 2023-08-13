@@ -203,8 +203,10 @@ an<Candidate> CacheTranslation::Peek() {
 
 // DistinctTranslation
 
-DistinctTranslation::DistinctTranslation(an<Translation> translation)
-    : translation_(New<CacheTranslation>(translation)) {
+DistinctTranslation::DistinctTranslation(an<Translation> translation,
+                                         const bool combine_candidates)
+    : translation_(New<CacheTranslation>(translation)),
+      combine_candidates_(combine_candidates) {
   set_exhausted(!translation_ || translation_->exhausted());
 }
 
@@ -233,7 +235,7 @@ bool DistinctTranslation::Next() {
     }
   }
   an<Phrase> phrase = As<Phrase>(Candidate::GetGenuineCandidate(cache_));
-  if (phrase) {
+  if (phrase && combine_candidates_) {
     string comment = phrase->comment();
     while (!translation_->exhausted()) {
       an<Candidate> cand = translation_->Peek();

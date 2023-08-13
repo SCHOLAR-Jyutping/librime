@@ -51,6 +51,7 @@ class ScriptTranslator : public Translator,
   bool enable_correction_ = false;
   bool enable_sentence_ = true;
   bool encode_commit_history_ = true;
+  bool combine_candidates_ = true;
   the<Corrector> corrector_;
   the<Poet> poet_;
 };

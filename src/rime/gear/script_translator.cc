@@ -171,6 +171,7 @@ ScriptTranslator::ScriptTranslator(const Ticket& ticket)
     config->GetBool(name_space_ + "/enable_sentence", &enable_sentence_);
     config->GetBool(name_space_ + "/encode_commit_history",
                     &encode_commit_history_);
+    config->GetBool(name_space_ + "/combine_candidates", &combine_candidates_);
     config->GetInt(name_space_ + "/max_homophones", &max_homophones_);
     poet_.reset(new Poet(language(), config));
   }
@@ -204,7 +205,7 @@ an<Translation> ScriptTranslator::Query(const string& input,
                      dict_.get(), enable_user_dict ? user_dict_.get() : NULL)) {
     return nullptr;
   }
-  auto deduped = New<DistinctTranslation>(result);
+  auto deduped = New<DistinctTranslation>(result, combine_candidates_);
   if (contextual_suggestions_) {
     return poet_->ContextualWeighted(deduped, input, segment.start, this);
   }

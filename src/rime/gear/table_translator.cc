@@ -219,6 +219,7 @@ TableTranslator::TableTranslator(const Ticket& ticket)
     config->GetBool(name_space_ + "/enable_encoder", &enable_encoder_);
     config->GetBool(name_space_ + "/encode_commit_history",
                     &encode_commit_history_);
+    config->GetBool(name_space_ + "/combine_candidates", &combine_candidates_);
     config->GetInt(name_space_ + "/max_phrase_length", &max_phrase_length_);
     config->GetInt(name_space_ + "/max_homographs", &max_homographs_);
     if (enable_sentence_ || sentence_over_completion_ ||
@@ -299,7 +300,7 @@ an<Translation> TableTranslator::Query(const string& input,
   if (translation && translation->exhausted()) {
     return nullptr;
   }
-  translation = New<DistinctTranslation>(translation);
+  translation = New<DistinctTranslation>(translation, combine_candidates_);
   if (contextual_suggestions_) {
     return poet_->ContextualWeighted(translation, input, segment.start, this);
   }
