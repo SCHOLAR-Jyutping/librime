@@ -187,7 +187,7 @@ if defined CMAKE_GENERATOR (
   set common_cmake_flags=%common_cmake_flags% -G%CMAKE_GENERATOR%
 )
 if defined ARCH (
-  set common_cmake_flags=%common_cmake_flags% -A%ARCH%
+  set common_cmake_flags=%common_cmake_flags% -A%ARCH% -DCMAKE_GENERATOR_PLATFORM="%ARCH%"
 )
 if defined PLATFORM_TOOLSET (
   set common_cmake_flags=%common_cmake_flags% -T%PLATFORM_TOOLSET%
