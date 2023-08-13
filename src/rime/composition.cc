@@ -95,7 +95,17 @@ Preedit Composition::GetPreedit(const string& full_input,
 }
 
 string Composition::GetPrompt() const {
-  return empty() ? string() : back().prompt;
+  string prompt = empty() ? string() : back().prompt;
+  if (size() > 1) {
+    Segment second_to_last = end()[-2];
+    for (const string& tag : back().tags) {
+      if (second_to_last.HasTag(tag + "_prefix")) {
+        prompt += second_to_last.prompt;
+        break;
+      }
+    }
+  }
+  return prompt;
 }
 
 string Composition::GetCommitText() const {
