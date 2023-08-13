@@ -44,18 +44,3 @@ install(TARGETS rime_dict_manager DESTINATION ${BIN_INSTALL_DIR})
 endif()
 
 install(TARGETS rime_patch DESTINATION ${BIN_INSTALL_DIR})
-
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/default.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/symbols.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/essay.txt
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/luna_pinyin.dict.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/luna_pinyin.schema.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/cangjie5.dict.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})
-file(COPY ${PROJECT_SOURCE_DIR}/data/minimal/cangjie5.schema.yaml
-     DESTINATION ${EXECUTABLE_OUTPUT_PATH})

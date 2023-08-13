@@ -19,3 +19,6 @@
 [submodule "plugins/rime-dictionary-lookup-filter"]
 	path = plugins/rime-dictionary-lookup-filter
 	url = https://github.com/TypeDuck-HK/rime-dictionary-lookup-filter.git
+[submodule "schema"]
+	path = build/bin
+	url = https://github.com/TypeDuck-HK/schema.git

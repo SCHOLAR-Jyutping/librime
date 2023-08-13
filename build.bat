@@ -105,7 +105,9 @@ if %build_deps% == 0 (
 ))))
 
 if %clean% == 1 (
-  rmdir /s /q build
+  md .temp
+  robocopy .temp build /nocopy /purge /xd bin
+  rmdir /s /q .temp
   rmdir /s /q deps\glog\cmake-build
   rmdir /s /q deps\googletest\build
   rmdir /s /q deps\leveldb\build
