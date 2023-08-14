@@ -16,8 +16,8 @@ jobs:
   build:
     runs-on: macos-latest
     env:
-      boost_version: 1.78.0
-      BOOST_ROOT: ${{ github.workspace }}/deps/boost_1_78_0
+      boost_version: 1.83.0
+      BOOST_ROOT: ${{ github.workspace }}/deps/boost_1_83_0
       RIME_PLUGINS: ${{ inputs.rime_plugins }}
     steps:
       - name: Checkout last commit
@@ -82,9 +82,9 @@ jobs:
       - name: Create distributable
         run: |
           make xcode/dist
-          tar -cjvf rime-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
+          tar -cjvf rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
           dist version-info.txt
-          tar -cjvf rime-deps-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
+          tar -cjvf rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
           --exclude '*/.placeholder' \
           bin include lib share
 
@@ -92,5 +92,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            rime-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
-            rime-deps-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
+            rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
+            rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
