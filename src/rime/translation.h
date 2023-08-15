@@ -127,7 +127,7 @@ class DistinctTranslation : public Translation {
   virtual an<Candidate> Peek();
 
  protected:
-  bool DistinctTranslation::AlreadyHas(const pair<string, string>& candidate) const;
+  bool AlreadyHas(const pair<string, string>& candidate) const;
 
   const bool combine_candidates_;
   set<pair<string, string> > candidate_set_;

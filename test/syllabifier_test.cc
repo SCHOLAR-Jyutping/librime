@@ -152,7 +152,7 @@ TEST_F(RimeSyllabifierTest, TransposedSyllableGraph) {
   rime::SyllableGraph g;
   const rime::string input("changan");
   s.BuildSyllableGraph(input, *prism_, &g);
-  ASSERT_FALSE(g.indices.end() == g.indices.find(0));
+  ASSERT_NE(1, g.indices.size());
   EXPECT_EQ(2, g.indices[0].size());
   EXPECT_FALSE(g.indices[0].end() == g.indices[0].find(syllable_id_["chan"]));
   EXPECT_FALSE(g.indices[0].end() == g.indices[0].find(syllable_id_["chang"]));
