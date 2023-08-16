@@ -20,7 +20,6 @@
 #include <rime/dict/db.h>
 #include <rime/dict/table.h>
 #include <rime/dict/user_dictionary.h>
-#include <rime/gear/memory.h>
 
 namespace rime {
 
@@ -376,13 +375,8 @@ bool UserDictionary::UpdateEntry(const DictEntry& entry,
     v.dee = algo::formula_d(0.0, (double)tick_, v.dee, (double)v.tick);
   }
   v.tick = tick_;
-  if (auto commit_entry = dynamic_cast<const CommitEntry*>(&entry)) {
-    v.elements.clear();
-    v.elements.resize(commit_entry->elements.size());
-    std::transform(commit_entry->elements.begin(), commit_entry->elements.end(),
-                   v.elements.begin(),
-                   [](const DictEntry* e) { return e->text; });
-  }
+  if (v.elements.empty())
+    v.AppendElements(entry);
   return db_->Update(key, v.Pack());
 }
 

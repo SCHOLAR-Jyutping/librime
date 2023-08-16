@@ -12,6 +12,7 @@
 #include <rime/algo/dynamics.h>
 #include <rime/dict/text_db.h>
 #include <rime/dict/user_db.h>
+#include <rime/gear/memory.h>
 
 namespace rime {
 
@@ -19,11 +20,21 @@ UserDbValue::UserDbValue(const string& value) {
   Unpack(value);
 }
 
+void UserDbValue::AppendElements(const DictEntry& entry) {
+  if (auto commit_entry = dynamic_cast<const CommitEntry*>(&entry)) {
+    for (const DictEntry* element : commit_entry->elements) {
+      AppendElements(*element);
+    }
+  } else {
+    elements.push_back(entry.text);
+  }
+}
+
 string UserDbValue::Pack() const {
-  return boost::str(elements.empty()
+  return boost::str(elements.size() <= 1
                         ? boost::format("c=%1% d=%2% t=%3%") % commits % dee % tick
                         : boost::format("c=%1% d=%2% t=%3% e=%4%") %
-                              commits % dee % tick % boost::join(elements, "\t"));
+                              commits % dee % tick % boost::join(elements, "/"));
 }
 
 bool UserDbValue::Unpack(const string& value) {
@@ -44,7 +55,7 @@ bool UserDbValue::Unpack(const string& value) {
         tick = boost::lexical_cast<TickCount>(v);
       } else if (k == "e") {
         elements.clear();
-        boost::split(elements, v, boost::is_any_of("\t"));
+        boost::split(elements, v, boost::is_any_of("/\t"));
       }
     } catch (...) {
       LOG(ERROR) << "failed in parsing key-value from userdb entry '" << k_eq_v
@@ -224,6 +235,7 @@ bool UserDbMerger::Put(const string& key, const string& value) {
     o.commits = v.commits;
   o.dee = (std::max)(o.dee, v.dee);
   o.tick = max_tick_;
+  o.elements = v.elements;
   return db_->Update(key, o.Pack()) && ++merged_entries_;
 }
 
@@ -264,6 +276,7 @@ bool UserDbImporter::Put(const string& key, const string& value) {
   } else if (v.commits < 0) {  // mark as deleted
     o.commits = (std::min)(v.commits, -std::abs(o.commits));
   }
+  o.elements = v.elements;
   return db_->Update(key, o.Pack());
 }
 

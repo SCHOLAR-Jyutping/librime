@@ -11,6 +11,7 @@
 #include <rime/component.h>
 #include <rime/dict/db.h>
 #include <rime/dict/db_utils.h>
+#include <rime/dict/vocabulary.h>
 
 namespace rime {
 
@@ -25,6 +26,8 @@ struct UserDbValue {
 
   UserDbValue() = default;
   UserDbValue(const string& value);
+
+  void AppendElements(const DictEntry& entry);
 
   string Pack() const;
   bool Unpack(const string& value);
