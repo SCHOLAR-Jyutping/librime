@@ -717,9 +717,9 @@ bool Table::Query(const SyllableGraph& syll_graph,
       }
     }
   }
-  std::vector<TableAccessor>& endAccessors =
-      (*result)[syll_graph.interpreted_length];
-  if (endAccessors.empty()) {
+  if (result->empty()) {
+    std::vector<TableAccessor>& endAccessors =
+        (*result)[syll_graph.interpreted_length];
     for (TableQuery& query : deferred)
       query.AccessAll(endAccessors);
     if (endAccessors.empty())
