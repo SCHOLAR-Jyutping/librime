@@ -21,45 +21,6 @@ const int kTableFormatLowestCompatible = 4.0;
 const char kTableFormatPrefix[] = "Rime::Table/";
 const size_t kTableFormatPrefixLen = sizeof(kTableFormatPrefix) - 1;
 
-class TableQuery {
- public:
-  TableQuery(table::Index* index) : lv1_index_(index) { Reset(); }
-
-  TableAccessor Access(SyllableId syllable_id, double credibility = 0.0) const;
-  void AccessAll(vector<TableAccessor>& accessors, double credibility = 0.0);
-
-  // down to next level
-  bool Advance(SyllableId syllable_id, double credibility = 0.0);
-
-  // up one level
-  bool Backdate();
-
-  // back to root
-  void Reset();
-
-  size_t level() const { return level_; }
-
- protected:
-  size_t level_ = 0;
-  Code index_code_;
-  vector<double> credibility_;
-
- private:
-  bool Walk(SyllableId syllable_id);
-
-  table::HeadIndex* lv1_index_ = nullptr;
-  table::TrunkIndex* lv2_index_ = nullptr;
-  table::TrunkIndex* lv3_index_ = nullptr;
-  table::TailIndex* lv4_index_ = nullptr;
-};
-
-struct QueryQueue {
-  size_t pos;
-  TableQuery query;
-  bool isRegularSpelling;
-  bool hasNoEntry;
-};
-
 TableAccessor::TableAccessor(const Code& index_code,
                              const List<table::Entry>* list,
                              double credibility)
