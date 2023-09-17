@@ -163,10 +163,10 @@ int Syllabifier::BuildSyllableGraph(const string& input,
     SpellingType min_edge_type = kInvalidSpelling;
     // fuzzy spellings are immune to invalidation by normal spellings
     SpellingType max_edge_type = kFuzzySpelling;
-    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end(); ++j) {
+    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end();) {
       if (good.find(j->first) == good.end()) {
         // not connected
-        graph->edges[i].erase(j);
+        graph->edges[i].erase(j++);
         continue;
       }
       for (auto k = j->second.begin(); k != j->second.end(); ++k) {
@@ -180,30 +180,35 @@ int Syllabifier::BuildSyllableGraph(const string& input,
           max_edge_type = k->second.type;
         }
       }
+      j++;
     }
-    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end(); ++j) {
+    for (auto j = graph->edges[i].begin(); j != graph->edges[i].end();) {
       // penalize syllables (eg. matching abbreviated spellings)
       // when there is a path of more favored type
       SpellingType edge_type = kInvalidSpelling;
-      for (auto k = j->second.begin(); k != j->second.end(); ++k) {
+      for (auto k = j->second.begin(); k != j->second.end();) {
         if (k->second.is_correction) {
           continue;  // Don't care correction edges
         }
         if (k->second.type > min_edge_type) {
           if (j->first < graph->edges[i].rbegin()->first) {
-            j->second.erase(k);
+            j->second.erase(k++);
+            continue;
           } else {
             k->second.credibility += kPenaltyForDisfavoredType;
           }
         } else if (k->second.type < edge_type) {
           edge_type = k->second.type;
         }
+        ++k;
       }
       if (j->second.empty()) {
-        graph->edges[i].erase(j);
+        graph->edges[i].erase(j++);
+        continue;
       } else if (edge_type < kAbbreviation) {
         CheckOverlappedSpellings(graph, i, j->first);
       }
+      ++j;
     }
     if (graph->vertices[i] > max_edge_type || graph->edges[i].empty()) {
       DLOG(INFO) << "remove stale vertex at " << i;
