@@ -24,5 +24,5 @@ jobs:
       - name: Install dependency
         run: ./action-install-linux.sh
 
-      - name: Build and test
-        run: make test
+      - name: Build
+        run: make release

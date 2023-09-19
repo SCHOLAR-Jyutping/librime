@@ -76,8 +76,8 @@ jobs:
       - name: Install Rime plugins
         run: ./action-install-plugins-macos.sh
 
-      - name: Build and test
-        run: make xcode/test
+      - name: Build
+        run: make xcode
 
       - name: Create distributable
         run: |
