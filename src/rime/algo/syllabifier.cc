@@ -150,9 +150,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
   size_t normal_farthest = farthest;
   while (true) {
     auto it = graph->vertices.find(normal_farthest);
-    if (it == graph->vertices.end())
-      continue;
-    if (it->second == kNormalSpelling)
+    if (it != graph->vertices.end() && it->second == kNormalSpelling)
       break;
     --normal_farthest;
   }
@@ -180,7 +178,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
           max_edge_type = k->second.type;
         }
       }
-      j++;
+      ++j;
     }
     for (auto j = graph->edges[i].begin(); j != graph->edges[i].end();) {
       // penalize syllables (eg. matching abbreviated spellings)
