@@ -37,8 +37,8 @@ namespace rime {
 
 DetectModifications::DetectModifications(TaskInitializer arg) {
   try {
-    data_dirs_ = boost::any_cast<vector<string>>(arg);
-  } catch (const boost::bad_any_cast&) {
+    data_dirs_ = std::any_cast<vector<string>>(arg);
+  } catch (const std::bad_any_cast&) {
     LOG(ERROR) << "DetectModifications: invalid arguments.";
   }
 }
@@ -163,8 +163,8 @@ bool InstallationUpdate::Run(Deployer* deployer) {
 
 WorkspaceUpdate::WorkspaceUpdate(TaskInitializer arg) {
   try {
-    build_dictionary_ = boost::any_cast<bool>(arg);
-  } catch (const boost::bad_any_cast&) {
+    build_dictionary_ = std::any_cast<bool>(arg);
+  } catch (const std::bad_any_cast&) {
     LOG(ERROR) << "WorkspaceUpdate: invalid arguments.";
   }
 }
@@ -262,10 +262,10 @@ bool WorkspaceUpdate::Run(Deployer* deployer) {
 
 SchemaUpdate::SchemaUpdate(TaskInitializer arg) : verbose_(false) {
   try {
-    auto p = boost::any_cast<pair<string, bool>>(arg);
+    auto p = std::any_cast<pair<string, bool>>(arg);
     schema_file_ = p.first;
     build_dictionary_ = p.second;
-  } catch (const boost::bad_any_cast&) {
+  } catch (const std::bad_any_cast&) {
     LOG(ERROR) << "SchemaUpdate: invalid arguments.";
   }
 }
@@ -394,10 +394,10 @@ bool SchemaUpdate::Run(Deployer* deployer) {
 
 ConfigFileUpdate::ConfigFileUpdate(TaskInitializer arg) {
   try {
-    auto p = boost::any_cast<pair<string, string>>(arg);
+    auto p = std::any_cast<pair<string, string>>(arg);
     file_name_ = p.first;
     version_key_ = p.second;
-  } catch (const boost::bad_any_cast&) {
+  } catch (const std::bad_any_cast&) {
     LOG(ERROR) << "ConfigFileUpdate: invalid arguments.";
   }
 }
