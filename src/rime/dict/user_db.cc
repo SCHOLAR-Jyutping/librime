@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
 #include <rime/service.h>
 #include <rime/algo/dynamics.h>
 #include <rime/dict/text_db.h>
@@ -51,11 +50,11 @@ bool UserDbValue::Unpack(const string& value) {
     string v(k_eq_v.substr(eq + 1));
     try {
       if (k == "c") {
-        commits = boost::lexical_cast<int>(v);
+        commits = std::stoi(v);
       } else if (k == "d") {
-        dee = (std::min)(10000.0, boost::lexical_cast<double>(v));
+        dee = (std::min)(10000.0, std::stod(v));
       } else if (k == "t") {
-        tick = boost::lexical_cast<TickCount>(v);
+        tick = std::stoul(v);
       } else if (k == "e") {
         elements.clear();
         boost::split(elements, v, boost::is_any_of("/\t"));
@@ -190,7 +189,7 @@ static TickCount get_tick_count(Db* db) {
   string tick;
   if (db && db->MetaFetch("/tick", &tick)) {
     try {
-      return boost::lexical_cast<TickCount>(tick);
+      return std::stoul(tick);
     } catch (...) {
     }
   }
@@ -211,7 +210,7 @@ UserDbMerger::~UserDbMerger() {
 bool UserDbMerger::MetaPut(const string& key, const string& value) {
   if (key == "/tick") {
     try {
-      their_tick_ = boost::lexical_cast<TickCount>(value);
+      their_tick_ = std::stoul(value);
       max_tick_ = (std::max)(our_tick_, their_tick_);
     } catch (...) {
     }
@@ -247,7 +246,7 @@ void UserDbMerger::CloseMerge() {
     return;
   Deployer& deployer(Service::instance().deployer());
   try {
-    db_->MetaUpdate("/tick", boost::lexical_cast<string>(max_tick_));
+    db_->MetaUpdate("/tick", std::to_string(max_tick_));
     db_->MetaUpdate("/user_id", deployer.user_id);
   } catch (...) {
     LOG(ERROR) << "failed to update tick count.";
