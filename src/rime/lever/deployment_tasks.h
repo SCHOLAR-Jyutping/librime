@@ -34,20 +34,23 @@ class InstallationUpdate : public DeploymentTask {
 // update distributed config files and preset schemas
 class WorkspaceUpdate : public DeploymentTask {
  public:
-  WorkspaceUpdate(TaskInitializer arg = TaskInitializer()) {}
+  explicit WorkspaceUpdate(const bool& build_dictionary = true)
+      : build_dictionary_(build_dictionary) {}
+  WorkspaceUpdate(TaskInitializer arg);
   bool Run(Deployer* deployer);
 
  protected:
   string GetSchemaPath(Deployer* deployer,
                        const string& schema_id,
                        bool prefer_shared_copy);
+  bool build_dictionary_;
 };
 
 // update a specific schema, build corresponding dictionary
 class SchemaUpdate : public DeploymentTask {
  public:
-  explicit SchemaUpdate(const string& schema_file)
-      : schema_file_(schema_file) {}
+  explicit SchemaUpdate(const string& schema_file, const bool& build_dictionary = true)
+      : schema_file_(schema_file), build_dictionary_(build_dictionary) {}
   SchemaUpdate(TaskInitializer arg);
   bool Run(Deployer* deployer);
   void set_verbose(bool verbose) { verbose_ = verbose; }
@@ -55,6 +58,7 @@ class SchemaUpdate : public DeploymentTask {
  protected:
   string schema_file_;
   bool verbose_ = false;
+  bool build_dictionary_;
 };
 
 // update a specific config file

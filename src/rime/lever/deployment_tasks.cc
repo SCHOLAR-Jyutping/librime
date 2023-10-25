@@ -158,6 +158,14 @@ bool InstallationUpdate::Run(Deployer* deployer) {
   return config.SaveToFile(installation_info.string());
 }
 
+WorkspaceUpdate::WorkspaceUpdate(TaskInitializer arg) {
+  try {
+    build_dictionary_ = boost::any_cast<bool>(arg);
+  } catch (const boost::bad_any_cast&) {
+    LOG(ERROR) << "WorkspaceUpdate: invalid arguments.";
+  }
+}
+
 bool WorkspaceUpdate::Run(Deployer* deployer) {
   LOG(INFO) << "updating workspace.";
   {
@@ -209,7 +217,7 @@ bool WorkspaceUpdate::Run(Deployer* deployer) {
       }
       return;
     }
-    the<DeploymentTask> t(new SchemaUpdate(schema_path));
+    the<DeploymentTask> t(new SchemaUpdate(schema_path, build_dictionary_));
     if (t->Run(deployer))
       ++success;
     else
@@ -251,7 +259,9 @@ bool WorkspaceUpdate::Run(Deployer* deployer) {
 
 SchemaUpdate::SchemaUpdate(TaskInitializer arg) : verbose_(false) {
   try {
-    schema_file_ = boost::any_cast<string>(arg);
+    auto p = boost::any_cast<pair<string, bool>>(arg);
+    schema_file_ = p.first;
+    build_dictionary_ = p.second;
   } catch (const boost::bad_any_cast&) {
     LOG(ERROR) << "SchemaUpdate: invalid arguments.";
   }
@@ -337,6 +347,9 @@ bool SchemaUpdate::Run(Deployer* deployer) {
       new ConfigFileUpdate(schema_id + ".schema.yaml", "schema/version"));
   if (!config_file_update->Run(deployer)) {
     return false;
+  }
+  if (!build_dictionary_) {
+    return true;
   }
   // reload compiled config
   config.reset(Config::Require("schema")->Create(schema_id));

@@ -99,7 +99,8 @@ RIME_API Bool RimeStartMaintenance(Bool full_check) {
     deployer.StartMaintenance();
     return True;
   }
-  deployer.ScheduleTask("workspace_update");
+  TaskInitializer build_dictionary(false);
+  deployer.ScheduleTask("workspace_update", build_dictionary);
   deployer.ScheduleTask("user_dict_upgrade");
   deployer.ScheduleTask("cleanup_trash");
   deployer.StartMaintenance();
@@ -134,15 +135,17 @@ RIME_API Bool RimePrebuildAllSchemas() {
 
 RIME_API Bool RimeDeployWorkspace() {
   Deployer& deployer(Service::instance().deployer());
+  TaskInitializer build_dictionary(true);
   return Bool(deployer.RunTask("installation_update") &&
-              deployer.RunTask("workspace_update") &&
+              deployer.RunTask("workspace_update", build_dictionary) &&
               deployer.RunTask("user_dict_upgrade") &&
               deployer.RunTask("cleanup_trash"));
 }
 
 RIME_API Bool RimeDeploySchema(const char* schema_file) {
   Deployer& deployer(Service::instance().deployer());
-  return Bool(deployer.RunTask("schema_update", string(schema_file)));
+  TaskInitializer args(make_pair<string, bool>(schema_file, true));
+  return Bool(deployer.RunTask("schema_update", args));
 }
 
 RIME_API Bool RimeDeployConfigFile(const char* file_name,
