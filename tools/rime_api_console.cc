@@ -8,6 +8,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <rime_api.h>
+#include <unordered_map>
+
+#ifdef _WIN32
+#include <windows.h>
+#pragma execution_character_set("utf-8")
+#endif
+
+const std::unordered_map<char, const char*> char_replacements = {
+  {'\0', "<\\0>"},
+  {'\a', "<\\a>"},
+  {'\b', "<\\b>"},
+  {'\t', "<\\t>"},
+  {'\n', "<\\n>"},
+  {'\v', "<\\v>"},
+  {'\f', "<\\f>"},
+  {'\r', "<\\r>"},
+};
+
+void print_comment(const char* str) {
+  if (!str) return;
+  for (size_t i = 0; i < strlen(str); ++i) {
+    auto it = char_replacements.find(str[i]);
+    if (it == char_replacements.end()) {
+      putchar(str[i]);
+    } else {
+      printf("%s", it->second);
+    }
+  }
+}
 
 void print_status(RimeStatus *status) {
   printf("schema: %s / %s\n",
@@ -51,12 +80,13 @@ void print_menu(RimeMenu *menu) {
          menu->page_size);
   for (int i = 0; i < menu->num_candidates; ++i) {
     bool highlighted = i == menu->highlighted_candidate_index;
-    printf("%d. %c%s%c%s\n",
-           i + 1,
+    printf("%d. %c%s%c ",
+           (i + 1) % 10,
            highlighted ? '[' : ' ',
            menu->candidates[i].text,
-           highlighted ? ']' : ' ',
-           menu->candidates[i].comment ? menu->candidates[i].comment : "");
+           highlighted ? ']' : ' ');
+    print_comment(menu->candidates[i].comment);
+    putchar('\n');
   }
 }
 
@@ -135,9 +165,8 @@ bool execute_special_command(const char* line, RimeSessionId session_id) {
     RimeCandidateListIterator iterator = {0};
     if (rime->candidate_list_begin(session_id, &iterator)) {
       while (rime->candidate_list_next(&iterator)) {
-        printf("%d. %s", iterator.index + 1, iterator.candidate.text);
-        if (iterator.candidate.comment)
-          printf(" (%s)", iterator.candidate.comment);
+        printf("%d.  %s  ", iterator.index + 1, iterator.candidate.text);
+        print_comment(iterator.candidate.comment);
         putchar('\n');
       }
       rime->candidate_list_end(&iterator);
@@ -181,6 +210,10 @@ void on_message(void* context_object,
 }
 
 int main(int argc, char *argv[]) {
+#ifdef _WIN32
+  SetConsoleOutputCP(65001);
+#endif
+
   RimeApi* rime = rime_get_api();
 
   RIME_STRUCT(RimeTraits, traits);
