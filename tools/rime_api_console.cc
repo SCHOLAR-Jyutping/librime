@@ -224,10 +224,17 @@ int main(int argc, char *argv[]) {
 
   fprintf(stderr, "initializing...\n");
   rime->initialize(NULL);
-  Bool full_check = True;
-  if (rime->start_maintenance(full_check))
+  Bool full_check = False;
+  if (rime->start_maintenance(full_check)) {
+    rime->deploy();
     rime->join_maintenance_thread();
+  }
   fprintf(stderr, "ready.\n");
+
+  if (argc > 1 && !strcmp(argv[1], "--build")) {
+    rime->finalize();
+    return 0;
+  }
 
   RimeSessionId session_id = rime->create_session();
   if (!session_id) {
