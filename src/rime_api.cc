@@ -95,9 +95,16 @@ RIME_API Bool RimeStartMaintenance(Bool full_check) {
     return False;
   }
   if (!full_check) {
-    deployer.ScheduleTask("user_dict_upgrade");
-    deployer.StartMaintenance();
-    return True;
+    TaskInitializer args{
+        vector<string>{
+            deployer.user_data_dir,
+            deployer.shared_data_dir,
+        },
+    };
+    if (!deployer.RunTask("detect_modifications", args)) {
+      return False;
+    }
+    LOG(INFO) << "changes detected; starting maintenance.";
   }
   TaskInitializer build_dictionary(false);
   deployer.ScheduleTask("workspace_update", build_dictionary);
