@@ -5,8 +5,8 @@
 // 2011-11-02 GONG Chen <chen.sst@gmail.com>
 //
 #include <cstdlib>
+#include <sstream>
 #include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
 #include <rime/service.h>
 #include <rime/algo/dynamics.h>
 #include <rime/dict/text_db.h>
@@ -33,10 +33,12 @@ void UserDbValue::AppendElements(const DictEntry& entry) {
 }
 
 string UserDbValue::Pack() const {
-  return boost::str(elements.size() <= 1
-                        ? boost::format("c=%1% d=%2% t=%3%") % commits % dee % tick
-                        : boost::format("c=%1% d=%2% t=%3% e=%4%") %
-                              commits % dee % tick % boost::join(elements, "/"));
+  std::ostringstream packed;
+  packed << "c=" << commits << " d=" << dee << " t=" << tick;
+  if (elements.size() > 1) {
+	packed << " e=" << boost::join(elements, "/");
+  }
+  return packed.str();
 }
 
 bool UserDbValue::Unpack(const string& value) {
