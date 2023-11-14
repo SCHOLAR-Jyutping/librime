@@ -35,6 +35,7 @@ class TableTranslator : public Translator,
                                size_t start,
                                bool include_prefix_phrases = false);
   string GetPrecedingText(size_t start) const;
+  string Spell(const Code& code);
   UnityTableEncoder* encoder() const { return encoder_.get(); }
 
  protected:

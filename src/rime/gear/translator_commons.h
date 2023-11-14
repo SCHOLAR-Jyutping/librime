@@ -141,6 +141,7 @@ struct Ticket;
 class TranslatorOptions {
  public:
   TranslatorOptions(const Ticket& ticket);
+  virtual ~TranslatorOptions() {}
   bool IsUserDictDisabledFor(const string& input) const;
 
   const string& delimiters() const { return delimiters_; }
@@ -154,6 +155,8 @@ class TranslatorOptions {
   void set_enable_completion(bool enabled) { enable_completion_ = enabled; }
   bool strict_spelling() const { return strict_spelling_; }
   void set_strict_spelling(bool is_strict) { strict_spelling_ = is_strict; }
+  bool show_full_code() const { return show_full_code_; }
+  void set_show_full_code(bool enabled) { show_full_code_ = enabled; }
   double initial_quality() const { return initial_quality_; }
   void set_initial_quality(double quality) { initial_quality_ = quality; }
   Projection& preedit_formatter() { return preedit_formatter_; }
@@ -165,6 +168,7 @@ class TranslatorOptions {
   bool contextual_suggestions_ = false;
   bool enable_completion_ = true;
   bool strict_spelling_ = false;
+  bool show_full_code_ = false;
   double initial_quality_ = 0.;
   Projection preedit_formatter_;
   Projection comment_formatter_;

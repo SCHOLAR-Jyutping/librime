@@ -75,7 +75,13 @@ an<Candidate> TableTranslation::Peek() {
     return nullptr;
   bool is_user_phrase = PreferUserPhrase();
   auto e = PreferredEntry(is_user_phrase);
-  string comment(is_constructed(e.get()) ? kUnitySymbol : e->comment);
+  string comment(e->comment);
+  if (is_constructed(e.get())) {
+    comment = kUnitySymbol;
+  } else if (options_ && options_->show_full_code())
+    if (auto translator = dynamic_cast<TableTranslator*>(options_)) {
+      comment = translator->Spell(e->code);
+    }
   if (options_) {
     options_->comment_formatter().Apply(&comment);
   }
@@ -352,6 +358,16 @@ bool TableTranslator::Memorize(const CommitEntry& commit_entry) {
     }
   }
   return true;
+}
+
+string TableTranslator::Spell(const Code& code) {
+  string result;
+  vector<string> syllables;
+  if (!dict_ || !dict_->Decode(code, &syllables) || syllables.empty())
+    return result;
+  result = boost::algorithm::join(syllables, string(1, delimiters_.at(0)));
+  // comment_formatter_.Apply(&result);  // Done in TableTranslation::Peek()
+  return result;
 }
 
 string TableTranslator::GetPrecedingText(size_t start) const {

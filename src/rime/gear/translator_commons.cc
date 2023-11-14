@@ -124,6 +124,7 @@ TranslatorOptions::TranslatorOptions(const Ticket& ticket) {
     config->GetBool(ticket.name_space + "/enable_completion",
                     &enable_completion_);
     config->GetBool(ticket.name_space + "/strict_spelling", &strict_spelling_);
+    config->GetBool(ticket.name_space + "/show_full_code", &show_full_code_);
     config->GetDouble(ticket.name_space + "/initial_quality",
                       &initial_quality_);
     preedit_formatter_.Load(
