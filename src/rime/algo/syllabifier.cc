@@ -186,6 +186,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
       SpellingType edge_type = kInvalidSpelling;
       for (auto k = j->second.begin(); k != j->second.end();) {
         if (k->second.is_correction) {
+          ++k;
           continue;  // Don't care correction edges
         }
         if (k->second.type > min_edge_type) {
