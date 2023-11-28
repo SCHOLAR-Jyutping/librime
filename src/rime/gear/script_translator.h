@@ -56,6 +56,40 @@ class ScriptTranslator : public Translator,
   the<Poet> poet_;
 };
 
+class ScriptSyllabifier : public PhraseSyllabifier {
+ public:
+  ScriptSyllabifier(ScriptTranslator* translator,
+                    Corrector* corrector,
+                    const string& input,
+                    size_t start)
+      : translator_(translator),
+        input_(input),
+        start_(start),
+        syllabifier_(translator->delimiters(),
+                     translator->enable_completion(),
+                     translator->strict_spelling()) {
+    if (corrector) {
+      syllabifier_.EnableCorrection(corrector);
+    }
+  }
+
+  virtual Spans Syllabify(const Phrase* phrase);
+  size_t BuildSyllableGraph(Prism& prism);
+  string GetPreeditString(const Phrase& cand) const;
+  string GetOriginalSpelling(const Phrase& cand) const;
+  bool IsCandidateCorrection(const Phrase& cand) const;
+
+  ScriptTranslator* translator() const { return translator_; }
+  const SyllableGraph& syllable_graph() const { return syllable_graph_; }
+
+ protected:
+  ScriptTranslator* translator_;
+  string input_;
+  size_t start_;
+  Syllabifier syllabifier_;
+  SyllableGraph syllable_graph_;
+};
+
 }  // namespace rime
 
 #endif  // RIME_SCRIPT_TRANSLATOR_H_
