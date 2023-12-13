@@ -719,6 +719,24 @@ RIME_API Bool RimeConfigBeginList(RimeConfigIterator* iterator,
   iterator->list = new RimeConfigIteratorImpl<ConfigList>(*list, key);
   return True;
 }
+RIME_API Bool RimeConfigListAppendString(RimeConfig* config, const char* key, const char* value) {
+  if (!config) {
+    return False;
+  }
+  Config* c = reinterpret_cast<Config*>(config->ptr);
+  if (!c) {
+    return False;
+  }
+  an<ConfigList> list = c->GetList(key);
+  if (!list) {
+    return False;
+  }
+  auto val = New<ConfigValue>();
+  val->SetString(value);
+  if(!list->Append(val))
+    return False;
+  return True;
+}
 
 RIME_API Bool RimeConfigBeginMap(RimeConfigIterator* iterator,
                                  RimeConfig* config,
@@ -1172,6 +1190,7 @@ RIME_API RimeApi* rime_get_api() {
     s_api.config_create_map = &RimeConfigCreateMap;
     s_api.config_list_size = &RimeConfigListSize;
     s_api.config_begin_list = &RimeConfigBeginList;
+    s_api.config_list_append_string = &RimeConfigListAppendString;
     s_api.get_input = &RimeGetInput;
     s_api.get_caret_pos = &RimeGetCaretPos;
     s_api.select_candidate = &RimeSelectCandidate;

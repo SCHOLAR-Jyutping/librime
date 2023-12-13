@@ -291,6 +291,9 @@ RIME_API Bool RimeFreeStatus(RimeStatus* status);
 // Accessing candidate list
 RIME_API Bool RimeCandidateListBegin(RimeSessionId session_id,
                                      RimeCandidateListIterator* iterator);
+RIME_API Bool RimeConfigListAppendString(RimeConfig* config,
+                                         const char* key,
+                                         const char* value); 
 RIME_API Bool RimeCandidateListNext(RimeCandidateListIterator* iterator);
 RIME_API void RimeCandidateListEnd(RimeCandidateListIterator* iterator);
 RIME_API Bool RimeCandidateListFromIndex(RimeSessionId session_id,
@@ -578,7 +581,9 @@ typedef struct rime_api_t {
   Bool (*config_begin_list)(RimeConfigIterator* iterator,
                             RimeConfig* config,
                             const char* key);
-
+  Bool (*config_list_append_string)(RimeConfig* config,
+                                    const char* key,
+                                    const char* value);
   //! get raw input
   /*!
    *  NULL is returned if session does not exist.
