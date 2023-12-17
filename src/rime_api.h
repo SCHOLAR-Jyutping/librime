@@ -391,6 +391,7 @@ RIME_API Bool RimeConfigUpdateSignature(RimeConfig* config, const char* signer);
 RIME_API Bool RimeSimulateKeySequence(RimeSessionId session_id,
                                       const char* key_sequence);
 
+RIME_API Bool RimeSetInput(RimeSessionId session_id, const char* input);
 // Module
 
 /*!
@@ -661,6 +662,8 @@ typedef struct rime_api_t {
                                                  const char* option_name,
                                                  Bool state,
                                                  Bool abbreviated);
+
+  Bool (*set_input)(RimeSessionId session_id, const char* input);
 } RimeApi;
 
 //! API entry
