@@ -120,18 +120,18 @@ class Sentence : public Phrase {
         word_lengths_(other.word_lengths_) {
     entry_ = New<DictEntry>(other.entry());
   }
-  void Extend(const DictEntry* another, size_t end_pos, double new_weight);
+  void Extend(const DictEntry& another, size_t end_pos, double new_weight);
   void Offset(size_t offset);
 
   bool empty() const { return components_.empty(); }
 
   size_t size() const { return components_.size(); }
 
-  const vector<const DictEntry*>& components() const { return components_; }
+  const vector<DictEntry>& components() const { return components_; }
   const vector<size_t>& word_lengths() const { return word_lengths_; }
 
  protected:
-  vector<const DictEntry*> components_;
+  vector<DictEntry> components_;
   vector<size_t> word_lengths_;
 };
 

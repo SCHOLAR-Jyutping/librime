@@ -113,14 +113,6 @@ void DictEntryList::SortRange(size_t start, size_t count) {
   sort_range(*this, start, count);
 }
 
-void UserDictEntryList::Sort() {
-  sort(*this);
-}
-
-void UserDictEntryList::SortRange(size_t start, size_t count) {
-  sort_range(*this, start, count);
-}
-
 void DictEntryFilterBinder::AddFilter(DictEntryFilter filter) {
   if (!filter_) {
     filter_.swap(filter);

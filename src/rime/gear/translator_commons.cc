@@ -91,13 +91,13 @@ bool Spans::HasVertex(size_t vertex) const {
 
 // Sentence
 
-void Sentence::Extend(const DictEntry* another,
+void Sentence::Extend(const DictEntry& another,
                       size_t end_pos,
                       double new_weight) {
   entry_->weight = new_weight;
-  entry_->text.append(another->text);
-  entry_->code.insert(entry_->code.end(), another->code.begin(),
-                      another->code.end());
+  entry_->text.append(another.text);
+  entry_->code.insert(entry_->code.end(), another.code.begin(),
+                      another.code.end());
   components_.push_back(another);
   word_lengths_.push_back(end_pos - end());
   set_end(end_pos);

@@ -237,7 +237,7 @@ an<Sentence> Poet::MakeSentenceWithStrategy(const WordGraph& graph,
   for (const auto* c : best.components()) {
     if (!c->entry)
       continue;
-    sentence->Extend(c->entry, c->end_pos, c->weight);
+    sentence->Extend(*c->entry, c->end_pos, c->weight);
   }
   return sentence;
 }

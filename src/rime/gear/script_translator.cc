@@ -122,8 +122,6 @@ class ScriptTranslation : public Translation {
   size_t cand_count_ = 0;
 
   bool enable_correction_;
-
-  WordGraph graph_;
 };
 
 // ScriptTranslator implementation
@@ -556,7 +554,6 @@ an<Sentence> ScriptTranslation::MakeSentence(Dictionary* dict,
                               translator_->GetPrecedingText(start_))) {
     sentence->Offset(start_);
     sentence->set_syllabifier(syllabifier_);
-    graph_ = graph;  // Prevent deallocation
     return sentence;
   }
   return nullptr;

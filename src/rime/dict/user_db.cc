@@ -21,10 +21,9 @@ UserDbValue::UserDbValue(const string& value) {
 }
 
 void UserDbValue::AppendElements(const DictEntry& entry) {
-  auto user_dict_entry = dynamic_cast<const UserDictEntry*>(&entry);
-  if (user_dict_entry && user_dict_entry->elements.size() > 1) {
-    elements.insert(elements.end(), user_dict_entry->elements.begin(),
-                    user_dict_entry->elements.end());
+  if (entry.elements.size() > 1) {
+    elements.insert(elements.end(), entry.elements.begin(),
+                    entry.elements.end());
   } else if (auto commit_entry = dynamic_cast<const CommitEntry*>(&entry)) {
     for (const DictEntry* element : commit_entry->elements) {
       AppendElements(*element);

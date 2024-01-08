@@ -28,7 +28,7 @@ struct DfsState {
   TickCount present_tick;
   Code code;
   vector<double> credibility;
-  map<int, UserDictEntryList> query_result;
+  map<int, DictEntryList> query_result;
   an<DbAccessor> accessor;
   string key;
   string value;
@@ -76,11 +76,11 @@ void DfsState::RecruitEntry(size_t pos) {
 
 // UserDictEntryIterator members
 
-void UserDictEntryIterator::Add(an<UserDictEntry>&& entry) {
+void UserDictEntryIterator::Add(an<DictEntry>&& entry) {
   cache_.push_back(std::move(entry));
 }
 
-void UserDictEntryIterator::SetEntries(UserDictEntryList&& entries) {
+void UserDictEntryIterator::SetEntries(DictEntryList&& entries) {
   cache_ = std::move(entries);
 }
 
@@ -97,7 +97,7 @@ void UserDictEntryIterator::AddFilter(DictEntryFilter filter) {
   }
 }
 
-an<UserDictEntry> UserDictEntryIterator::Peek() {
+an<DictEntry> UserDictEntryIterator::Peek() {
   if (exhausted()) {
     return nullptr;
   }
@@ -243,7 +243,7 @@ void UserDictionary::DfsLookup(const SyllableGraph& syll_graph,
   }
 }
 
-static an<UserDictEntryCollector> collect(map<int, UserDictEntryList>* source) {
+static an<UserDictEntryCollector> collect(map<int, DictEntryList>* source) {
   auto result = New<UserDictEntryCollector>();
   for (auto& x : *source) {
     (*result)[x.first].SetEntries(std::move(x.second));
@@ -450,12 +450,12 @@ bool UserDictionary::TranslateCodeToString(const Code& code, string* result) {
   return true;
 }
 
-an<UserDictEntry> UserDictionary::CreateDictEntry(const string& key,
-                                                  const string& value,
-                                                  TickCount present_tick,
-                                                  double credibility,
-                                                  string* full_code) {
-  an<UserDictEntry> e;
+an<DictEntry> UserDictionary::CreateDictEntry(const string& key,
+                                              const string& value,
+                                              TickCount present_tick,
+                                              double credibility,
+                                              string* full_code) {
+  an<DictEntry> e;
   size_t separator_pos = key.find('\t');
   if (separator_pos == string::npos)
     return e;
@@ -467,7 +467,7 @@ an<UserDictEntry> UserDictionary::CreateDictEntry(const string& key,
   if (v.tick < present_tick)
     v.dee = algo::formula_d(0, (double)present_tick, v.dee, (double)v.tick);
   // create!
-  e = New<UserDictEntry>();
+  e = New<DictEntry>();
   e->text = key.substr(separator_pos + 1);
   e->commit_count = v.commits;
   // TODO: argument s not defined...
