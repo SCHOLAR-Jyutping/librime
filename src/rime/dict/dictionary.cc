@@ -17,7 +17,7 @@
 
 namespace rime {
 
-const double kPredictionThreshold = 3.4011973816621555; // log(30)
+const double kPredictionThreshold = 4.605170185988092; // log(100)
 
 namespace dictionary {
 
