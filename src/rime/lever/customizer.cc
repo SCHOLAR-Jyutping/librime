@@ -131,6 +131,7 @@ bool Customizer::UpdateConfigFile() {
     dest_version.append(".custom.").append(customization);
     dest_config.SetString(version_key_, dest_version);
     dest_config.SetString("customization", customization);
+    dest_config.SetString("__patch", "patch");
     if (!dest_config.SaveToFile(dest_path_.string())) {
       LOG(ERROR) << "Error saving destination config file.";
       return false;
