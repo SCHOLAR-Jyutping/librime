@@ -27,7 +27,7 @@ void CommitEntry::Clear() {
 
 void CommitEntry::AppendPhrase(const an<Phrase>& phrase) {
   text += phrase->text();
-  Code phrase_code = phrase->code();
+  Code phrase_code = phrase->full_code();
   code.insert(code.end(), phrase_code.begin(), phrase_code.end());
   if (auto sentence = As<Sentence>(phrase)) {
     for (const DictEntry& e : sentence->components()) {
