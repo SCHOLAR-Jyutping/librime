@@ -1,30 +1,22 @@
-# Rime with Windows
+# RIME for TypeDuck Development with Windows
 
 ## Prerequisites
 
-`librime` is tested to work on Windows with the following combinations of build
-tools and libraries:
+  - **Visual Studio** for *Desktop development in C++*
+  - **[cmake](http://www.cmake.org/)**
 
-  - Visual Studio 2017
-  - [Boost](http://www.boost.org/)=1.64
-  - [cmake](http://www.cmake.org/)>=3.8
-
-and
-
-  - Visual Studio 2015
-  - [Boost](http://www.boost.org/)=1.60
-  - [cmake](http://www.cmake.org/)>=3.8
-
-Boost and cmake versions need to match higher VS version.
-
-[Python](https://python.org)>=2.7 is needed to build opencc dictionaries.
-
-## Get the code
+## Checkout source code
 
 ``` batch
-git clone --recursive https://github.com/rime/librime.git
+git clone --recursive https://github.com/TypeDuck-HK/librime.git
+cd librime
 ```
-or [download from GitHub](https://github.com/rime/librime).
+
+## Install Boost
+
+``` batch
+install-boost.bat
+```
 
 ## Setup a build environment
 
@@ -38,6 +30,8 @@ When prepared, do the following in a *Developer Command Prompt* window.
 
 ## Build Boost
 
+This is already handled by `install-boost.bat`.
+
 ``` batch
 build.bat boost
 ```
@@ -47,18 +41,30 @@ build.bat boost
 ``` batch
 build.bat deps
 ```
-This builds dependent libraries in `librime\deps\*`, and copies artifacts to
-`librime\include`, `librime\lib` and `librime\bin`.
 
 ## Build librime
 
 ``` batch
 build.bat librime
 ```
-This creates `build\lib\Release\rime.dll`.
 
-Build artifacts - the shared library along with API headers and supporting files
-are gathered in `dist` directory.
+Or, create a debug build:
+
+``` batch
+build.bat librime debug
+```
+
+## Run unit tests
+
+``` batch
+build.bat test
+```
+
+Or, test the debug build:
+
+``` batch
+build.bat test debug
+```
 
 ## Try it in the console
 
@@ -68,8 +74,5 @@ is working.
 ``` batch
 copy /Y build\lib\Release\rime.dll build\bin
 cd build\bin
-echo congmingdeRime{space}shurufa | Release\rime_api_console.exe > output.txt
+Release\rime_api_console.exe
 ```
-
-Instead of redirecting output to a file, you can set appropriate code page
-(`chcp 65001`) and font in the console to work with the REPL interactively.

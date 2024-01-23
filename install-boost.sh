@@ -6,7 +6,7 @@ RIME_ROOT="$(cd "$(dirname "$0")"; pwd)"
 boost_version="${boost_version=1.83.0}"
 boost_x_y_z="${boost_version//./_}"
 
-BOOST_ROOT="${BOOST_ROOT=${RIME_ROOT}/deps/boost_${boost_x_y_z}}"
+export BOOST_ROOT="${BOOST_ROOT=${RIME_ROOT}/deps/boost_${boost_x_y_z}}"
 
 boost_tarball="boost_${boost_x_y_z}.tar.bz2"
 download_url="https://sourceforge.net/projects/boost/files/boost/${boost_version}/${boost_tarball}"
