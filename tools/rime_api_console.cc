@@ -224,11 +224,10 @@ int main(int argc, char *argv[]) {
 
   fprintf(stderr, "initializing...\n");
   rime->initialize(NULL);
-  Bool full_check = False;
-  if (rime->start_maintenance(full_check)) {
-    rime->deploy();
-    rime->join_maintenance_thread();
-  }
+  rime->start_quick();
+  rime->deploy_config_file("common.yaml", "config_version");
+  rime->deploy();
+  rime->join_maintenance_thread();
   fprintf(stderr, "ready.\n");
 
   if (argc > 1 && !strcmp(argv[1], "--build")) {
