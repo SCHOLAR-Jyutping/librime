@@ -456,6 +456,7 @@ typedef struct rime_api_t {
   void (*finalize)(void);
 
   Bool (*start_maintenance)(Bool full_check);
+  Bool (*start_quick)(void);
   Bool (*is_maintenance_mode)(void);
   void (*join_maintenance_thread)(void);
 
@@ -528,6 +529,9 @@ typedef struct rime_api_t {
                             size_t buffer_size);
   const char* (*config_get_cstring)(RimeConfig* config, const char* key);
   Bool (*config_update_signature)(RimeConfig* config, const char* signer);
+  Bool (*config_begin_list)(RimeConfigIterator* iterator,
+                            RimeConfig* config,
+                            const char* key);
   Bool (*config_begin_map)(RimeConfigIterator* iterator,
                            RimeConfig* config,
                            const char* key);
@@ -578,12 +582,19 @@ typedef struct rime_api_t {
   Bool (*config_create_list)(RimeConfig* config, const char* key);
   Bool (*config_create_map)(RimeConfig* config, const char* key);
   size_t (*config_list_size)(RimeConfig* config, const char* key);
-  Bool (*config_begin_list)(RimeConfigIterator* iterator,
-                            RimeConfig* config,
-                            const char* key);
+  Bool (*config_list_append_bool)(RimeConfig* config,
+                                  const char* key,
+                                  Bool value);
+  Bool (*config_list_append_int)(RimeConfig* config,
+                                 const char* key,
+                                 int value);
+  Bool (*config_list_append_double)(RimeConfig* config,
+                                    const char* key,
+                                    double value);
   Bool (*config_list_append_string)(RimeConfig* config,
                                     const char* key,
                                     const char* value);
+
   //! get raw input
   /*!
    *  NULL is returned if session does not exist.

@@ -719,24 +719,6 @@ RIME_API Bool RimeConfigBeginList(RimeConfigIterator* iterator,
   iterator->list = new RimeConfigIteratorImpl<ConfigList>(*list, key);
   return True;
 }
-RIME_API Bool RimeConfigListAppendString(RimeConfig* config, const char* key, const char* value) {
-  if (!config) {
-    return False;
-  }
-  Config* c = reinterpret_cast<Config*>(config->ptr);
-  if (!c) {
-    return False;
-  }
-  an<ConfigList> list = c->GetList(key);
-  if (!list) {
-    return False;
-  }
-  auto val = New<ConfigValue>();
-  val->SetString(value);
-  if(!list->Append(val))
-    return False;
-  return True;
-}
 
 RIME_API Bool RimeConfigBeginMap(RimeConfigIterator* iterator,
                                  RimeConfig* config,
@@ -1008,6 +990,82 @@ RIME_API size_t RimeConfigListSize(RimeConfig* config, const char* key) {
   return 0;
 }
 
+RIME_API Bool RimeConfigListAppendBool(RimeConfig* config,
+                                       const char* key,
+                                       Bool value) {
+  if (!config) {
+    return False;
+  }
+  Config* c = reinterpret_cast<Config*>(config->ptr);
+  if (!c) {
+    return False;
+  }
+  an<ConfigList> list = c->GetList(key);
+  if (!list) {
+    return False;
+  }
+  auto val = New<ConfigValue>();
+  val->SetBool(value != False);
+  return Bool(list->Append(val));
+}
+
+RIME_API Bool RimeConfigListAppendDouble(RimeConfig* config,
+                                         const char* key,
+                                         double value) {
+  if (!config) {
+    return False;
+  }
+  Config* c = reinterpret_cast<Config*>(config->ptr);
+  if (!c) {
+    return False;
+  }
+  an<ConfigList> list = c->GetList(key);
+  if (!list) {
+    return False;
+  }
+  auto val = New<ConfigValue>();
+  val->SetDouble(value);
+  return Bool(list->Append(val));
+}
+
+RIME_API Bool RimeConfigListAppendInt(RimeConfig* config,
+                                      const char* key,
+                                      int value) {
+  if (!config) {
+    return False;
+  }
+  Config* c = reinterpret_cast<Config*>(config->ptr);
+  if (!c) {
+    return False;
+  }
+  an<ConfigList> list = c->GetList(key);
+  if (!list) {
+    return False;
+  }
+  auto val = New<ConfigValue>();
+  val->SetInt(value);
+  return Bool(list->Append(val));
+}
+
+RIME_API Bool RimeConfigListAppendString(RimeConfig* config,
+                                         const char* key,
+                                         const char* value) {
+  if (!config) {
+    return False;
+  }
+  Config* c = reinterpret_cast<Config*>(config->ptr);
+  if (!c) {
+    return False;
+  }
+  an<ConfigList> list = c->GetList(key);
+  if (!list) {
+    return False;
+  }
+  auto val = New<ConfigValue>();
+  val->SetString(value);
+  return Bool(list->Append(val));
+}
+
 const char* RimeGetInput(RimeSessionId session_id) {
   an<Session> session(Service::instance().GetSession(session_id));
   if (!session)
@@ -1125,6 +1183,7 @@ RIME_API RimeApi* rime_get_api() {
     s_api.initialize = &RimeInitialize;
     s_api.finalize = &RimeFinalize;
     s_api.start_maintenance = &RimeStartMaintenance;
+    s_api.start_quick = &RimeStartQuick;
     s_api.is_maintenance_mode = &RimeIsMaintenancing;
     s_api.join_maintenance_thread = &RimeJoinMaintenanceThread;
     s_api.deployer_initialize = &RimeDeployerInitialize;
@@ -1165,6 +1224,7 @@ RIME_API RimeApi* rime_get_api() {
     s_api.config_get_string = &RimeConfigGetString;
     s_api.config_get_cstring = &RimeConfigGetCString;
     s_api.config_update_signature = &RimeConfigUpdateSignature;
+    s_api.config_begin_list = &RimeConfigBeginList;
     s_api.config_begin_map = &RimeConfigBeginMap;
     s_api.config_next = &RimeConfigNext;
     s_api.config_end = &RimeConfigEnd;
@@ -1189,7 +1249,9 @@ RIME_API RimeApi* rime_get_api() {
     s_api.config_create_list = &RimeConfigCreateList;
     s_api.config_create_map = &RimeConfigCreateMap;
     s_api.config_list_size = &RimeConfigListSize;
-    s_api.config_begin_list = &RimeConfigBeginList;
+    s_api.config_list_append_bool = &RimeConfigListAppendBool;
+    s_api.config_list_append_int = &RimeConfigListAppendInt;
+    s_api.config_list_append_double = &RimeConfigListAppendDouble;
     s_api.config_list_append_string = &RimeConfigListAppendString;
     s_api.get_input = &RimeGetInput;
     s_api.get_caret_pos = &RimeGetCaretPos;
