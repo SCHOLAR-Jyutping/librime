@@ -85,7 +85,7 @@ class ScriptTranslation : public Translation {
         start_(start),
         syllabifier_(
             New<ScriptSyllabifier>(translator, corrector, input, start)),
-        enable_correction_(corrector || translator->enable_completion()) {
+        enable_correction_(corrector) {
     set_exhausted(true);
   }
   bool Evaluate(Dictionary* dict, UserDictionary* user_dict);
@@ -117,7 +117,7 @@ class ScriptTranslation : public Translation {
   DictEntryCollector::reverse_iterator phrase_iter_;
   UserDictEntryCollector::reverse_iterator user_phrase_iter_;
 
-  size_t max_corrections_ = 5;
+  size_t max_corrections_ = 4;
   size_t correction_count_ = 0;
   size_t cand_count_ = 0;
 
@@ -146,8 +146,6 @@ ScriptTranslator::ScriptTranslator(const Ticket& ticket)
     if (auto* corrector = Corrector::Require("corrector")) {
       corrector_.reset(corrector->Create(ticket));
     }
-  } else {
-    enable_correction_ = enable_completion();
   }
 }
 
