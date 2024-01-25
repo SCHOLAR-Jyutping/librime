@@ -1,13 +1,13 @@
-# RIME for TypeDuck
+# librime for TypeDuck
 
 This is a fork of the official [Rime Input Method Engine](https://github.com/rime/librime) (librime) for [TypeDuck](https://typeduck.hk).
 
 ## Build
 
-Follow the instructions to build librime:
+Follow these instructions to build librime:
 
-  - [macOS](./README-mac.md)
   - [Windows](./README-windows.md)
+  - [macOS](./README-mac.md)
   - Linux:
     ```
     make
