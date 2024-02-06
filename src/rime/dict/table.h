@@ -163,7 +163,7 @@ class TableQuery {
 
 class Table : public MappedFile {
  public:
-  RIME_API Table(const string& file_name);
+  RIME_API Table(const path& file_path);
   virtual ~Table();
 
   RIME_API bool Load();
