@@ -623,7 +623,8 @@ TableAccessor Table::QueryPhrases(const Code& code) {
 bool Table::Query(const SyllableGraph& syll_graph,
                   size_t start_pos,
                   TableQueryResult* result,
-                  bool with_completion) {
+                  bool predict_word,
+                  bool with_correction) {
   if (!result || !index_ || start_pos >= syll_graph.interpreted_length)
     return false;
   result->clear();
@@ -638,7 +639,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
     const bool hasNoEntry = q.front().hasNoEntry;
     q.pop();
     if (current_pos == syll_graph.interpreted_length) {
-      if (with_completion) {
+      if (predict_word) {
         if (isRegularSpelling && query.level() >= 2) {
           std::vector<TableAccessor>& accessors = (*result)[-query.level()];
           query.AccessAll(accessors);
@@ -661,7 +662,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
     for (const auto& spellings : index) {
       SyllableId syll_id = spellings.first;
       for (auto props : spellings.second) {
-        if (!with_completion &&
+        if (!with_correction &&
             (props->is_correction || props->type == kCompletion))
           continue;
         TableAccessor accessor(query.Access(syll_id, props->credibility));
