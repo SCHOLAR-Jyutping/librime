@@ -26,14 +26,12 @@ exit /b 1
 echo BOOST_ROOT=%BOOST_ROOT%
 echo.
 
-set clean=0
-set build_dir_base=build
-set build_dir_suffix=
 set build_config=Release
 set build_deps=0
 set build_librime=0
 set build_shared=ON
 set build_test=OFF
+set clean=0
 set enable_logging=ON
 
 :parse_cmdline_options
@@ -44,11 +42,9 @@ rem `thirdparty` is deprecated in favor of `deps`
 if "%1" == "thirdparty" set build_deps=1
 if "%1" == "librime" set build_librime=1
 if "%1" == "static" (
-  set build_dir_suffix=-static
   set build_shared=OFF
 )
 if "%1" == "shared" (
-  set build_dir_suffix=
   set build_shared=ON
 )
 if "%1" == "test" (
@@ -56,11 +52,11 @@ if "%1" == "test" (
   set build_test=ON
 )
 if "%1" == "debug" (
-  set build_dir_base=debug
+  if not defined build_dir set build_dir=debug
   set build_config=Debug
 )
 if "%1" == "release" (
-  set build_dir_base=build
+  if not defined build_dir set build_dir=build
   set build_config=Release
 )
 if "%1" == "logging" (
@@ -79,19 +75,21 @@ if %build_deps% == 0 (
   set build_librime=1
 )))
 
+if not defined build_dir set build_dir=build
+if not defined deps_install_prefix set deps_install_prefix=%RIME_ROOT%
+if not defined rime_install_prefix set rime_install_prefix=%RIME_ROOT%\dist
+
 if %clean% == 1 (
   md .temp
-  robocopy .temp build /nocopy /purge /xd bin
+  robocopy .temp %build_dir% /nocopy /purge /xd bin
   rmdir /s /q .temp
-  rmdir /s /q deps\glog\build
-  rmdir /s /q deps\googletest\build
-  rmdir /s /q deps\leveldb\build
-  rmdir /s /q deps\marisa-trie\build
-  rmdir /s /q deps\opencc\build
-  rmdir /s /q deps\yaml-cpp\build
+  rmdir /s /q deps\glog\%build_dir%
+  rmdir /s /q deps\googletest\%build_dir%
+  rmdir /s /q deps\leveldb\%build_dir%
+  rmdir /s /q deps\marisa-trie\%build_dir%
+  rmdir /s /q deps\opencc\%build_dir%
+  rmdir /s /q deps\yaml-cpp\%build_dir%
 )
-
-set build_dir=%build_dir_base%%build_dir_suffix%
 
 if defined CMAKE_GENERATOR (
   set common_cmake_flags=%common_cmake_flags% -G%CMAKE_GENERATOR%
@@ -113,7 +111,7 @@ set common_cmake_flags=%common_cmake_flags%^
 
 set deps_cmake_flags=%common_cmake_flags%^
   -DBUILD_SHARED_LIBS:BOOL=OFF^
-  -DCMAKE_INSTALL_PREFIX:PATH="%RIME_ROOT%"
+  -DCMAKE_INSTALL_PREFIX:PATH="%deps_install_prefix%"
 
 if %build_deps% == 1 (
   echo building glog.
@@ -186,7 +184,8 @@ set rime_cmake_flags=%common_cmake_flags%^
  -DBUILD_SHARED_LIBS=%build_shared%^
  -DBUILD_TEST=%build_test%^
  -DENABLE_LOGGING=%enable_logging%^
- -DCMAKE_INSTALL_PREFIX:PATH="%RIME_ROOT%\dist"
+ -DCMAKE_PREFIX_PATH:PATH="%deps_install_prefix%"^
+ -DCMAKE_INSTALL_PREFIX:PATH="%rime_install_prefix%"
 
 echo on
 call cmake . -B%build_dir% %rime_cmake_flags%
@@ -202,7 +201,7 @@ cmake --build %build_dir% --config %build_config% --target install
 if errorlevel 1 goto error
 
 if "%build_test%" == "ON" (
-  copy /y dist\lib\rime.dll %build_dir%\test
+  copy /y %rime_install_prefix%\lib\rime.dll %build_dir%\test
   ctest --test-dir %build_dir%\test -C %build_config%  --output-on-failure
   if errorlevel 1 goto error
 )
