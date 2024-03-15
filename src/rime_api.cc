@@ -162,7 +162,7 @@ RIME_API Bool RimeDeployWorkspace() {
 
 RIME_API Bool RimeDeploySchema(const char* schema_file) {
   Deployer& deployer(Service::instance().deployer());
-  TaskInitializer args(make_pair<string, bool>(schema_file, true));
+  TaskInitializer args(make_pair<path, bool>(path(schema_file), true));
   return Bool(deployer.RunTask("schema_update", args));
 }
 
