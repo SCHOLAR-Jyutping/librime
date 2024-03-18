@@ -2,11 +2,8 @@ name: Release CI
 
 on:
   push:
-    branches:
-      - master
     tags:
-      - '[0-9]+.*'
-  workflow_dispatch:
+      - '**'
 
 jobs:
   linux:
@@ -14,13 +11,9 @@ jobs:
 
   macos:
     uses: ./.github/workflows/macos-build.yml
-    with:
-      rime_plugins: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
 
   windows:
     uses: ./.github/workflows/windows-build.yml
-    with:
-      rime_plugins: hchunhui/librime-lua lotem/librime-octagram rime/librime-predict
 
   release:
     needs: [macos, windows]
@@ -32,24 +25,9 @@ jobs:
           path: artifact
           merge-multiple: true
 
-      - name: Create Nightly release
-        if: ${{ github.repository == 'rime/librime' && github.ref == 'refs/heads/master' }}
-        uses: 'marvinpinto/action-automatic-releases@latest'
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: latest
-          prerelease: true
-          title: "Nightly Build"
-          files: |
-            artifact/*
-
-      - name: Create Stable release
-        if: ${{ github.ref != 'refs/heads/master' }}
-        uses: 'marvinpinto/action-automatic-releases@latest'
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          title: librime ${{ github.ref_name }}
+          name: librime for TypeDuck: ${{ github.ref_name }}
           files: |
             artifact/*

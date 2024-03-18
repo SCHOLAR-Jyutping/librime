@@ -1,14 +1,6 @@
 name: Windows build
 on:
   workflow_call:
-    inputs:
-      repository:
-        default: ${{ github.repository }}
-        required: false
-        type: string
-      rime_plugins:
-        required: false
-        type: string
 
 jobs:
   build:
@@ -25,13 +17,11 @@ jobs:
     env:
       boost_version: 1.84.0
       BOOST_ROOT: ${{ github.workspace }}\deps\boost-1.84.0
-      RIME_PLUGINS: ${{ inputs.rime_plugins }}
 
     steps:
       - name: Checkout last commit
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.repository }}
           submodules: recursive
 
       - name: Create env.bat
@@ -61,8 +51,6 @@ jobs:
 
       - name: Configure build environment
         run: |
-          $git_ref_name = git describe --always
-          echo "git_ref_name=$git_ref_name" >> $env:GITHUB_ENV
           git submodule > submodule-status
 
       - name: Install boost
@@ -83,17 +71,19 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: .\build.bat deps
 
-      - name: Install Rime plugins
-        run: .\action-install-plugins-windows.bat
+      - name: Build
+        run: .\build.bat
 
-      - name: Build and test
-        run: .\build.bat test
+      - name: Set version info
+        run: |
+          echo "librime ${{ github.ref_name }}" >> version-info.txt
+          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
         run: |
-          7z a rime-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
+          7z a rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
           dist version-info.txt
-          7z a -x'!*/.placeholder' rime-deps-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
+          7z a -x'!*/.placeholder' rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
           bin include lib share
 
       - name: Upload artifacts
@@ -101,13 +91,11 @@ jobs:
         with:
           name: artifact-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}
           path: |
-            rime-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
-            rime-deps-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
+            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
+            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
 
   build-mingw:
     runs-on: windows-latest
-    env:
-      RIME_PLUGINS: ${{ inputs.rime_plugins }}
     defaults:
       run:
         shell: msys2 {0}
@@ -137,15 +125,6 @@ jobs:
       - run: git config --global core.autocrlf input
       - name: Checkout last commit
         uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repository }}
-            
-      - name: Configure build environment
-        run: |
-          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
-
-      - name: Install Rime plugins
-        run: ./action-install-plugins-macos.sh
 
       - name: Build with mingw-w64
         run: |
@@ -153,7 +132,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DENABLE_LOGGING:BOOL=ON \
-            -DBUILD_TEST:BOOL=ON \
+            -DBUILD_TEST:BOOL=OFF \
             -DBUILD_STATIC:BOOL=ON \
             -DBUILD_SHARED_LIBS:BOOL=ON
           cmake --build build
@@ -161,11 +140,16 @@ jobs:
           cd build && cp ./bin/librime.dll ./test
           ctest --output-on-failure
 
+      - name: Set version info
+        run: |
+          echo "librime ${{ github.ref_name }}" >> version-info.txt
+          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
+
       - name: Create distributable
         run: |
-          tar -cjvf rime-${{ env.git_ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
+          tar -cjvf rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
           dist version-info.txt
-          tar -cjvf rime-deps-${{ env.git_ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
+          tar -cjvf rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
           --exclude '*/.placeholder' \
           bin include lib share
 
@@ -174,4 +158,4 @@ jobs:
         with:
           name: artifact-${{ runner.os }}-mingw
           path: |
-            rime-${{ env.git_ref_name }}-${{ runner.os }}-mingw.tar.bz2
+            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2

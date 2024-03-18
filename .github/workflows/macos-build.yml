@@ -1,14 +1,6 @@
 name: macOS build
 on:
   workflow_call:
-    inputs:
-      repository:
-        default: ${{ github.repository }}
-        required: false
-        type: string
-      rime_plugins:
-        required: false
-        type: string
 jobs:
   build:
     runs-on: ${{ matrix.runs-on }}
@@ -25,12 +17,10 @@ jobs:
     env:
       boost_version: 1.84.0
       BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.84.0
-      RIME_PLUGINS: ${{ inputs.rime_plugins }}
     steps:
       - name: Checkout last commit
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.repository }}
           submodules: recursive
 
       - name: Configure build environment
@@ -38,7 +28,6 @@ jobs:
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
           echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
-          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
       - name: Configure build variant
         if: matrix.build_variant == 'universal'
@@ -66,19 +55,16 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: make deps
 
-      - name: Install Rime plugins
-        run: ./action-install-plugins-macos.sh
-
-      - name: Build and test
-        run: make test
+      - name: Build
+        run: make release
 
       - name: Create distributable
         if: matrix.create-distributable
         run: |
           make install
-          tar -cjvf rime-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2 \
+          tar -cjvf rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2 \
           dist version-info.txt
-          tar -cjvf rime-deps-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2 \
+          tar -cjvf rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2 \
           --exclude '*/.placeholder' \
           bin include lib share
 
@@ -88,5 +74,5 @@ jobs:
         with:
           name: artifact-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}
           path: |
-            rime-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2
-            rime-deps-${{ env.git_ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2
+            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2
+            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.build_variant || runner.arch }}.tar.bz2
