@@ -1,21 +1,32 @@
 name: Windows build
 on:
   workflow_call:
+    inputs:
+      repository:
+        default: ${{ github.repository }}
+        required: false
+        type: string
+      rime_plugins:
+        required: false
+        type: string
 jobs:
   build:
     runs-on: windows-latest
     env:
       boost_version: 1.83.0
       BOOST_ROOT: ${{ github.workspace }}\deps\boost_1_83_0
+      RIME_PLUGINS: ${{ inputs.rime_plugins }}
     steps:
       - name: Checkout last commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository }}
           submodules: recursive
 
       - name: Configure build environment
         run: |
           copy env.vs2022.bat env.bat
+          echo git_ref_name="$(git describe --always)" >> $env:GITHUB_ENV
 
       - name: Cache Boost
         id: cache-boost
@@ -55,24 +66,22 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: .\build.bat deps
 
+      - name: Install Rime plugins
+        run: .\action-install-plugins-windows.bat
+
       - name: Build
         run: .\build.bat
 
-      - name: Set version info
-        run: |
-          echo "librime ${{ github.ref_name }}" >> version-info.txt
-          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
-
       - name: Create distributable
         run: |
-          7z a rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z `
+          7z a rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.7z `
           dist version-info.txt
-          7z a -x'!*/.placeholder' rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z `
+          7z a -x'!*/.placeholder' rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.7z `
           bin include lib share
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           path: |
-            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z
-            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z
+            rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.7z
+            rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.7z

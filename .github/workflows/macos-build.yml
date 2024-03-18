@@ -2,7 +2,14 @@ name: macOS build
 on:
   workflow_call:
     inputs:
+      repository:
+        default: ${{ github.repository }}
+        required: false
+        type: string
       build_variant:
+        required: false
+        type: string
+      rime_plugins:
         required: false
         type: string
 jobs:
@@ -11,11 +18,17 @@ jobs:
     env:
       boost_version: 1.83.0
       BOOST_ROOT: ${{ github.workspace }}/deps/boost_1_83_0
+      RIME_PLUGINS: ${{ inputs.rime_plugins }}
     steps:
       - name: Checkout last commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
+          repository: ${{ inputs.repository }}
           submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
       - name: Configure build variant
         if: contains(inputs.build_variant, '-universal')
@@ -60,20 +73,18 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: make xcode/deps
 
+      - name: Install Rime plugins
+        run: ./action-install-plugins-macos.sh
+
       - name: Build
         run: make xcode
-
-      - name: Set version info
-        run: |
-          echo "librime ${{ github.ref_name }}" >> version-info.txt
-          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
         run: |
           make xcode/dist
-          tar -cjvf rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.tar.bz2 \
+          tar -cjvf rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
           dist version-info.txt
-          tar -cjvf rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.tar.bz2 \
+          tar -cjvf rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2 \
           --exclude '*/.placeholder' \
           bin include lib share
 
@@ -81,5 +92,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.tar.bz2
-            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.tar.bz2
+            rime-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
+            rime-deps-TypeDuck-${{ env.git_ref_name }}-${{ runner.os }}.tar.bz2
