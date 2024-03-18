@@ -312,9 +312,9 @@ string ScriptSyllabifier::GetPreeditString(const Phrase& cand) const {
 }
 
 string ScriptSyllabifier::GetOriginalSpelling(const Phrase& cand) const {
-  if (translator_ &&
-      (translator_->always_show_comments() || static_cast<int>(
-          cand.full_code().size()) <= translator_->spelling_hints())) {
+  if (translator_ && (translator_->always_show_comments() ||
+                      static_cast<int>(cand.full_code().size()) <=
+                          translator_->spelling_hints())) {
     return translator_->Spell(cand.full_code());
   }
   return string();
@@ -345,9 +345,10 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
     return false;
   if (phrase_ && !phrase_->empty() && phrase_->begin()->first < 0) {
     const auto& entry = phrase_->begin()->second.Peek();
-    prediction_ = New<Phrase>(translator_->language(), "predicted_phrase", start_,
-                              start_ + syllable_graph.interpreted_length, entry,
-                              -phrase_->begin()->first);
+    prediction_ =
+        New<Phrase>(translator_->language(), "predicted_phrase", start_,
+                    start_ + syllable_graph.interpreted_length, entry,
+                    -phrase_->begin()->first);
     prediction_->set_quality(std::exp(entry->weight) +
                              translator_->initial_quality());
     phrase_->erase(phrase_->begin()->first);
@@ -361,11 +362,12 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
   // If the first candidate is a correction, make sentense.
   bool is_first_candidate_a_correction = false;
   if (enable_correction_) {
-      CheckEmpty();
-      PrepareCandidate();
-      if (candidate_) {
-          is_first_candidate_a_correction = syllabifier_->IsCandidateCorrection(*candidate_);
-      }
+    CheckEmpty();
+    PrepareCandidate();
+    if (candidate_) {
+      is_first_candidate_a_correction =
+          syllabifier_->IsCandidateCorrection(*candidate_);
+    }
   }
 
   // make sentences when there is no exact-matching phrase candidate
@@ -480,7 +482,8 @@ bool ScriptTranslation::PreferUserPhrase() {
 
   return user_phrase_code_length > 0 &&
          user_phrase_code_length >= phrase_code_length &&
-         (user_phrase_code_length > phrase_code_length || user_phrase_weight >= phrase_weight);
+         (user_phrase_code_length > phrase_code_length ||
+          user_phrase_weight >= phrase_weight);
 }
 
 void ScriptTranslation::PrepareCandidate() {

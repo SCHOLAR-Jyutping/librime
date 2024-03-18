@@ -12,18 +12,13 @@
 #include "codepage.h"
 
 const std::unordered_map<char, const char*> char_replacements = {
-  {'\0', "<\\0>"},
-  {'\a', "<\\a>"},
-  {'\b', "<\\b>"},
-  {'\t', "<\\t>"},
-  {'\n', "<\\n>"},
-  {'\v', "<\\v>"},
-  {'\f', "<\\f>"},
-  {'\r', "<\\r>"},
+    {'\0', "<\\0>"}, {'\a', "<\\a>"}, {'\b', "<\\b>"}, {'\t', "<\\t>"},
+    {'\n', "<\\n>"}, {'\v', "<\\v>"}, {'\f', "<\\f>"}, {'\r', "<\\r>"},
 };
 
 void print_comment(const char* str) {
-  if (!str) return;
+  if (!str)
+    return;
   for (size_t i = 0; i < strlen(str); ++i) {
     auto it = char_replacements.find(str[i]);
     if (it == char_replacements.end()) {

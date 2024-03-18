@@ -49,7 +49,8 @@ class RIME_API WorkspaceUpdate : public DeploymentTask {
 // update a specific schema, build corresponding dictionary
 class RIME_API SchemaUpdate : public DeploymentTask {
  public:
-  explicit SchemaUpdate(const path& source_path, const bool& build_dictionary = true)
+  explicit SchemaUpdate(const path& source_path,
+                        const bool& build_dictionary = true)
       : source_path_(source_path), build_dictionary_(build_dictionary) {}
   SchemaUpdate(TaskInitializer arg);
   bool Run(Deployer* deployer);

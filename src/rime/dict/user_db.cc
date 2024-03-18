@@ -36,7 +36,7 @@ string UserDbValue::Pack() const {
   std::ostringstream packed;
   packed << "c=" << commits << " d=" << dee << " t=" << tick;
   if (elements.size() > 1) {
-	packed << " e=" << boost::join(elements, "/");
+    packed << " e=" << boost::join(elements, "/");
   }
   return packed.str();
 }

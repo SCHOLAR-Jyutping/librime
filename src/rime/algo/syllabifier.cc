@@ -106,8 +106,8 @@ int Syllabifier::BuildSyllableGraph(const string& input,
                                   exact_match_syllables.end()) {
               // Accept normal spellings only.
               if (props.type != kNormalSpelling) {
-                  accessor.Next();
-                  continue;
+                accessor.Next();
+                continue;
               }
               props.is_correction = true;
               props.credibility = kCorrectionCredibility;

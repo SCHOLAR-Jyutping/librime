@@ -200,15 +200,16 @@ TableAccessor TableQuery::Access(SyllableId syllable_id,
   return TableAccessor();
 }
 
-void TableQuery::AccessAll(vector<TableAccessor>& accessors, double credibility) {
+void TableQuery::AccessAll(vector<TableAccessor>& accessors,
+                           double credibility) {
   credibility += credibility_.back();
   if (level_ == 0) {
     if (!lv1_index_)
       return;
     for (size_t i = 0; i < lv1_index_->size; i++) {
       auto node = &lv1_index_->at[i];
-      TableAccessor accessor(add_syllable(index_code_, i),
-                             &node->entries, credibility);
+      TableAccessor accessor(add_syllable(index_code_, i), &node->entries,
+                             credibility);
       if (!accessor.exhausted())
         accessors.push_back(accessor);
       if (!node->next_level)

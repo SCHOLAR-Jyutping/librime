@@ -231,7 +231,8 @@ bool DistinctTranslation::Next() {
         continue;
       }
       if (cand->text() == phrase->text()) {
-        comment += (comment.empty() || cand->comment().empty() ? "" : "; ") + cand->comment();
+        comment += (comment.empty() || cand->comment().empty() ? "" : "; ") +
+                   cand->comment();
         translation_->Next();
         candidate_set_.insert(pair);
       } else {
@@ -246,7 +247,8 @@ bool DistinctTranslation::Next() {
   return true;
 }
 
-bool DistinctTranslation::AlreadyHas(const pair<string, string>& candidate) const {
+bool DistinctTranslation::AlreadyHas(
+    const pair<string, string>& candidate) const {
   return candidate_set_.find(candidate) != candidate_set_.end();
 }
 

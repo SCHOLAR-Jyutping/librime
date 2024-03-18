@@ -17,7 +17,7 @@
 
 namespace rime {
 
-const double kPredictionThreshold = 4.605170185988092; // log(100)
+const double kPredictionThreshold = 4.605170185988092;  // log(100)
 
 namespace dictionary {
 
@@ -253,7 +253,7 @@ static void lookup_table(Table* table,
           auto entry = a.entry();
           if (!predict.entries ||
               cr + entry->weight > predict.credibility +
-              predict.entries[predict.cursor].weight) {
+                                       predict.entries[predict.cursor].weight) {
             predict_pos = end_pos;
             predict = {table, a.code(), entry, cr};
           }

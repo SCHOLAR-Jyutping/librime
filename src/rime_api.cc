@@ -115,7 +115,7 @@ RIME_API Bool RimeStartMaintenance(Bool full_check) {
 
 RIME_API Bool RimeStartQuick() {
   LoadModules(kDeployerModules);
-  Deployer &deployer(Service::instance().deployer());
+  Deployer& deployer(Service::instance().deployer());
   deployer.RunTask("clean_old_log_files");
   if (!deployer.RunTask("installation_update")) {
     return False;

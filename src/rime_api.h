@@ -294,7 +294,7 @@ RIME_API Bool RimeCandidateListBegin(RimeSessionId session_id,
                                      RimeCandidateListIterator* iterator);
 RIME_API Bool RimeConfigListAppendString(RimeConfig* config,
                                          const char* key,
-                                         const char* value); 
+                                         const char* value);
 RIME_API Bool RimeCandidateListNext(RimeCandidateListIterator* iterator);
 RIME_API void RimeCandidateListEnd(RimeCandidateListIterator* iterator);
 RIME_API Bool RimeCandidateListFromIndex(RimeSessionId session_id,
