@@ -75,11 +75,13 @@ jobs:
         run: .\build.bat
 
       - name: Set version info
+        if: github.event_name != 'pull_request'
         run: |
           echo "librime ${{ github.ref_name }}" >> version-info.txt
           echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
+        if: github.event_name != 'pull_request'
         run: |
           7z a rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
           dist version-info.txt
@@ -87,6 +89,7 @@ jobs:
           bin include lib share
 
       - name: Upload artifacts
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}
@@ -125,6 +128,8 @@ jobs:
       - run: git config --global core.autocrlf input
       - name: Checkout last commit
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build with mingw-w64
         run: |
@@ -141,11 +146,13 @@ jobs:
           ctest --output-on-failure
 
       - name: Set version info
+        if: github.event_name != 'pull_request'
         run: |
           echo "librime ${{ github.ref_name }}" >> version-info.txt
           echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
+        if: github.event_name != 'pull_request'
         run: |
           tar -cjvf rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
           dist version-info.txt
@@ -154,6 +161,7 @@ jobs:
           bin include lib share
 
       - name: Upload artifacts
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ runner.os }}-mingw

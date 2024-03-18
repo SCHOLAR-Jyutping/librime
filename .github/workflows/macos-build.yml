@@ -12,7 +12,7 @@ jobs:
           - runs-on: macos-13
             create-distributable: false
           - runs-on: macos-14
-            create-distributable: true
+            create-distributable: ${{ github.event_name != 'pull_request' }}
             build_variant: universal
     env:
       boost_version: 1.84.0
@@ -57,6 +57,12 @@ jobs:
 
       - name: Build
         run: make release
+
+      - name: Set version info
+        if: matrix.create-distributable
+        run: |
+          echo "librime ${{ github.ref_name }}" >> version-info.txt
+          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
         if: matrix.create-distributable
