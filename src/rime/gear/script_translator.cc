@@ -48,8 +48,8 @@ struct SyllabifyTask {
 static bool syllabify_dfs(SyllabifyTask* task,
                           size_t depth,
                           size_t current_pos) {
-  if (depth == task->code.size()) {
-    return current_pos == task->target_pos;
+  if (current_pos == task->target_pos) {
+    return true;
   }
   SyllableId syllable_id = task->code.at(depth);
   auto z = task->graph.edges.find(current_pos);
@@ -312,10 +312,10 @@ string ScriptSyllabifier::GetPreeditString(const Phrase& cand) const {
 }
 
 string ScriptSyllabifier::GetOriginalSpelling(const Phrase& cand) const {
-  if (translator_ && (translator_->always_show_comments() ||
-                      static_cast<int>(cand.full_code().size()) <=
-                          translator_->spelling_hints())) {
-    return translator_->Spell(cand.full_code());
+  if (translator_ &&
+      (translator_->always_show_comments() ||
+       static_cast<int>(cand.code().size()) <= translator_->spelling_hints())) {
+    return translator_->Spell(cand.code());
   }
   return string();
 }
@@ -343,15 +343,14 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
   }
   if (!phrase_ && !user_phrase_)
     return false;
-  if (phrase_ && !phrase_->empty() && phrase_->begin()->first < 0) {
+  if (phrase_ && !phrase_->empty() && phrase_->begin()->first == -1) {
     const auto& entry = phrase_->begin()->second.Peek();
     prediction_ =
         New<Phrase>(translator_->language(), "predicted_phrase", start_,
-                    start_ + syllable_graph.interpreted_length, entry,
-                    -phrase_->begin()->first);
+                    start_ + syllable_graph.interpreted_length, entry);
     prediction_->set_quality(std::exp(entry->weight) +
                              translator_->initial_quality());
-    phrase_->erase(phrase_->begin()->first);
+    phrase_->erase(-1);
   }
 
   if (phrase_)

@@ -242,7 +242,6 @@ static void lookup_table(Table* table,
     return;
   }
   // copy result
-  int predict_pos = 0;
   dictionary::Chunk predict;
   for (auto& v : result) {
     int end_pos = v.first;
@@ -254,8 +253,7 @@ static void lookup_table(Table* table,
           if (!predict.entries ||
               cr + entry->weight > predict.credibility +
                                        predict.entries[predict.cursor].weight) {
-            predict_pos = end_pos;
-            predict = {table, a.code(), entry, cr};
+            predict = {table, a.code(), entry, (size_t)-end_pos, cr};
           }
         } while (a.Next());
       } else if (a.extra_code()) {
@@ -275,7 +273,7 @@ static void lookup_table(Table* table,
   }
   if (predict.entries && predict.entries[predict.cursor].weight >=
                              kPredictionThreshold - DBL_EPSILON) {
-    (*collector)[predict_pos].AddChunk(std::move(predict));
+    (*collector)[-1].AddChunk(std::move(predict));
   }
 }
 
