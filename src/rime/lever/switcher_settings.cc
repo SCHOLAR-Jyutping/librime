@@ -56,7 +56,7 @@ void SwitcherSettings::GetAvailableSchemasFromDirectory(const path& dir) {
   }
   for (fs::directory_iterator it(dir), end; it != end; ++it) {
     path file_path(it->path());
-    if (boost::ends_with(file_path.string(), ".schema.yaml")) {
+    if (boost::ends_with(file_path.u8string(), ".schema.yaml")) {
       Config config;
       if (config.LoadFromFile(file_path)) {
         SchemaInfo info;
@@ -88,6 +88,7 @@ void SwitcherSettings::GetAvailableSchemasFromDirectory(const path& dir) {
           }
         }
         config.GetString("schema/description", &info.description);
+        // output path in native encoding.
         info.file_path = file_path.string();
         available_.push_back(info);
       }
