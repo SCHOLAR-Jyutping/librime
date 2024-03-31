@@ -66,12 +66,8 @@ class Phrase : public Candidate {
          const string& type,
          size_t start,
          size_t end,
-         const an<DictEntry>& entry,
-         size_t original_code_length = 0)
-      : Candidate(type, start, end),
-        language_(language),
-        entry_(entry),
-        original_code_length_(original_code_length) {}
+         const an<DictEntry>& entry)
+      : Candidate(type, start, end), language_(language), entry_(entry) {}
   const string& text() const { return entry_->text; }
   string comment() const { return entry_->comment; }
   string preedit() const { return entry_->preedit; }
@@ -83,20 +79,27 @@ class Phrase : public Candidate {
   an<PhraseSyllabifier> syllabifier() const { return syllabifier_; }
   double weight() const { return entry_->weight; }
   void set_weight(double weight) { entry_->weight = weight; }
-  Code& full_code() const { return entry_->code; }
-  Code code() const {
-    Code& full_code_ = full_code();
-    if (!original_code_length_)
-      return full_code_;
-    Code code;
-    code.insert(code.end(), full_code_.begin(),
-                original_code_length_
-                    ? full_code_.begin() + original_code_length_
-                    : full_code_.end());
-    return code;
-  }
+  Code& code() const { return entry_->code; }
   const DictEntry& entry() const { return *entry_; }
   const Language* language() const { return language_; }
+  size_t matching_code_size() const {
+    return entry_->matching_code_size != 0 ? entry_->matching_code_size
+                                           : entry_->code.size();
+  }
+  bool is_exact_match() const {
+    return entry_->matching_code_size == 0 ||
+           entry_->matching_code_size == entry_->code.size();
+  }
+  bool is_predicitve_match() const {
+    return entry_->matching_code_size != 0 &&
+           entry_->matching_code_size < entry_->code.size();
+  }
+  Code matching_code() const {
+    return entry_->matching_code_size == 0
+               ? entry_->code
+               : Code(entry_->code.begin(),
+                      entry_->code.begin() + entry_->matching_code_size);
+  }
   Spans spans() {
     return syllabifier_ ? syllabifier_->Syllabify(this) : Spans();
   }
@@ -105,7 +108,6 @@ class Phrase : public Candidate {
   const Language* language_;
   an<DictEntry> entry_;
   an<PhraseSyllabifier> syllabifier_;
-  size_t original_code_length_;
 };
 
 //
