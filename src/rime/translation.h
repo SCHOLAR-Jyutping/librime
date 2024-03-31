@@ -14,7 +14,7 @@
 
 namespace rime {
 
-class Translation {
+class RIME_API Translation {
  public:
   Translation() = default;
   virtual ~Translation() = default;
@@ -27,8 +27,7 @@ class Translation {
 
   // should it provide the next candidate (negative value, zero) or
   // should it give up the chance for other translations (positive)?
-  RIME_API virtual int Compare(an<Translation> other,
-                               const CandidateList& candidates);
+  virtual int Compare(an<Translation> other, const CandidateList& candidates);
 
   bool exhausted() const { return exhausted_; }
 
@@ -52,7 +51,7 @@ class UniqueTranslation : public Translation {
   an<Candidate> candidate_;
 };
 
-class FifoTranslation : public Translation {
+class RIME_API FifoTranslation : public Translation {
  public:
   FifoTranslation();
 
@@ -121,7 +120,8 @@ inline an<Translation> Cached(Args&&... args) {
 
 class DistinctTranslation : public Translation {
  public:
-  DistinctTranslation(an<Translation> translation, const bool combine_candidates);
+  DistinctTranslation(an<Translation> translation,
+                      const bool combine_candidates);
 
   virtual bool Next();
   virtual an<Candidate> Peek();
@@ -130,7 +130,7 @@ class DistinctTranslation : public Translation {
   bool AlreadyHas(const pair<string, string>& candidate) const;
 
   const bool combine_candidates_;
-  set<pair<string, string> > candidate_set_;
+  set<pair<string, string>> candidate_set_;
   an<Translation> translation_;
   an<Candidate> cache_;
 };

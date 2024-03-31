@@ -1,55 +1,71 @@
 name: Windows build
 on:
   workflow_call:
+
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [msvc, clang]
+        arch: [x64]
+        include:
+          - { compiler: msvc, cc: cl, cxx: cl }
+          - { compiler: clang, cc: clang, cxx: clang++ }
+          - { compiler: msvc, arch: x86, cross_arch: x64_x86 }
     env:
-      boost_version: 1.83.0
-      BOOST_ROOT: ${{ github.workspace }}\deps\boost_1_83_0
+      boost_version: 1.84.0
+      BOOST_ROOT: ${{ github.workspace }}\deps\boost-1.84.0
+
     steps:
       - name: Checkout last commit
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Create env.bat
+        run: |
+          $envfile = ".\env.bat"
+          $envcontent = @"
+            set RIME_ROOT=%CD%
+            set CXX=${{ matrix.cxx }}
+            set CC=${{ matrix.cc }}
+            set CMAKE_GENERATOR=Ninja
+          "@
+          Set-Content -Path $envfile -Value $envcontent
+          cat $envfile
+          
+      - name: Configure MSVC
+        if: ${{ matrix.compiler == 'msvc' }}
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.cross_arch || matrix.arch }}
+
+      - name: Configure Ninja
+        run: pip install ninja
+
+      - name: Configure clang
+        if: ${{ matrix.compiler == 'clang' }}
+        run: choco upgrade -y llvm
+
       - name: Configure build environment
         run: |
-          copy env.vs2022.bat env.bat
+          git submodule > submodule-status
 
-      - name: Cache Boost
-        id: cache-boost
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.BOOST_ROOT }}.7z
-            ${{ env.BOOST_ROOT }}\stage
-          key: ${{ runner.os }}-boost-${{ env.boost_version }}
-
-      - name: Extract Boost source tarball
-        if: steps.cache-boost.outputs.cache-hit == 'true'
-        run: |
-          pushd deps
-          7z x ${{ env.BOOST_ROOT }}.7z
-          popd
-
-      - name: Install Boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
+      - name: Install boost
         run: .\install-boost.bat
-
-      - name: Check submodules
-        run: git submodule > submodule-status
 
       - name: Cache dependencies
         id: cache-deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             bin
             include
             lib
             share
-          key: ${{ runner.os }}-deps-${{ hashFiles('submodule-status') }}
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}-${{ hashFiles('submodule-status') }}
 
       - name: Build dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
@@ -59,20 +75,95 @@ jobs:
         run: .\build.bat
 
       - name: Set version info
+        if: github.event_name != 'pull_request'
         run: |
           echo "librime ${{ github.ref_name }}" >> version-info.txt
           echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
 
       - name: Create distributable
+        if: github.event_name != 'pull_request'
         run: |
-          7z a rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z `
+          7z a rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
           dist version-info.txt
-          7z a -x'!*/.placeholder' rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z `
+          7z a -x'!*/.placeholder' rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z `
           bin include lib share
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
+          name: artifact-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}
           path: |
-            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z
-            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}.7z
+            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
+            rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.7z
+
+  build-mingw:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Install dependencies with MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          release: false
+          update: true
+          msystem: UCRT64
+          install: >-
+            git
+            base-devel
+            mingw-w64-ucrt-x86_64-boost
+            mingw-w64-ucrt-x86_64-glog
+            mingw-w64-ucrt-x86_64-gtest
+            mingw-w64-ucrt-x86_64-yaml-cpp
+            mingw-w64-ucrt-x86_64-leveldb
+            mingw-w64-ucrt-x86_64-marisa
+            mingw-w64-ucrt-x86_64-opencc
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+
+      - run: git config --global core.autocrlf input
+      - name: Checkout last commit
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build with mingw-w64
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DENABLE_LOGGING:BOOL=ON \
+            -DBUILD_TEST:BOOL=OFF \
+            -DBUILD_STATIC:BOOL=ON \
+            -DBUILD_SHARED_LIBS:BOOL=ON
+          cmake --build build
+          cmake --install build
+          cd build && cp ./bin/librime.dll ./test
+          ctest --output-on-failure
+
+      - name: Set version info
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "librime ${{ github.ref_name }}" >> version-info.txt
+          echo $(git ls-tree HEAD:plugins | awk '$2 == "commit" {print $4,$3}') >> version-info.txt
+
+      - name: Create distributable
+        if: github.event_name != 'pull_request'
+        run: |
+          tar -cjvf rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
+          dist version-info.txt
+          tar -cjvf rime-deps-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2 \
+          --exclude '*/.placeholder' \
+          bin include lib share
+
+      - name: Upload artifacts
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ runner.os }}-mingw
+          path: |
+            rime-TypeDuck-${{ github.ref_name }}-${{ runner.os }}-mingw.tar.bz2

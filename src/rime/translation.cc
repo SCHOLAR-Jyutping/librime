@@ -20,21 +20,7 @@ int Translation::Compare(an<Translation> other,
   auto theirs = other->Peek();
   if (!ours || !theirs)
     return 1;
-  int k = 0;
-  // the one nearer to the beginning of segment comes first
-  k = ours->start() - theirs->start();
-  if (k != 0)
-    return k;
-  // then the longer comes first
-  k = ours->end() - theirs->end();
-  if (k != 0)
-    return -k;
-  // compare quality
-  double qdiff = ours->quality() - theirs->quality();
-  if (qdiff != 0.)
-    return (qdiff > 0.) ? -1 : 1;
-  // draw
-  return 0;
+  return ours->compare(*theirs);
 }
 
 bool UniqueTranslation::Next() {
@@ -245,7 +231,8 @@ bool DistinctTranslation::Next() {
         continue;
       }
       if (cand->text() == phrase->text()) {
-        comment += (comment.empty() || cand->comment().empty() ? "" : "; ") + cand->comment();
+        comment += (comment.empty() || cand->comment().empty() ? "" : "; ") +
+                   cand->comment();
         translation_->Next();
         candidate_set_.insert(pair);
       } else {
@@ -260,7 +247,8 @@ bool DistinctTranslation::Next() {
   return true;
 }
 
-bool DistinctTranslation::AlreadyHas(const pair<string, string>& candidate) const {
+bool DistinctTranslation::AlreadyHas(
+    const pair<string, string>& candidate) const {
   return candidate_set_.find(candidate) != candidate_set_.end();
 }
 

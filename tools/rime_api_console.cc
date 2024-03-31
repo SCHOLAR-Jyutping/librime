@@ -9,25 +9,16 @@
 #include <string.h>
 #include <rime_api.h>
 #include <unordered_map>
-
-#ifdef _WIN32
-#include <windows.h>
-#pragma execution_character_set("utf-8")
-#endif
+#include "codepage.h"
 
 const std::unordered_map<char, const char*> char_replacements = {
-  {'\0', "<\\0>"},
-  {'\a', "<\\a>"},
-  {'\b', "<\\b>"},
-  {'\t', "<\\t>"},
-  {'\n', "<\\n>"},
-  {'\v', "<\\v>"},
-  {'\f', "<\\f>"},
-  {'\r', "<\\r>"},
+    {'\0', "<\\0>"}, {'\a', "<\\a>"}, {'\b', "<\\b>"}, {'\t', "<\\t>"},
+    {'\n', "<\\n>"}, {'\v', "<\\v>"}, {'\f', "<\\f>"}, {'\r', "<\\r>"},
 };
 
 void print_comment(const char* str) {
-  if (!str) return;
+  if (!str)
+    return;
   for (size_t i = 0; i < strlen(str); ++i) {
     auto it = char_replacements.find(str[i]);
     if (it == char_replacements.end()) {
@@ -38,21 +29,26 @@ void print_comment(const char* str) {
   }
 }
 
-void print_status(RimeStatus *status) {
-  printf("schema: %s / %s\n",
-         status->schema_id, status->schema_name);
+void print_status(RimeStatus* status) {
+  printf("schema: %s / %s\n", status->schema_id, status->schema_name);
   printf("status: ");
-  if (status->is_disabled) printf("disabled ");
-  if (status->is_composing) printf("composing ");
-  if (status->is_ascii_mode) printf("ascii ");
-  if (status->is_full_shape) printf("full_shape ");
-  if (status->is_simplified) printf("simplified ");
+  if (status->is_disabled)
+    printf("disabled ");
+  if (status->is_composing)
+    printf("composing ");
+  if (status->is_ascii_mode)
+    printf("ascii ");
+  if (status->is_full_shape)
+    printf("full_shape ");
+  if (status->is_simplified)
+    printf("simplified ");
   printf("\n");
 }
 
-void print_composition(RimeComposition *composition) {
-  const char *preedit = composition->preedit;
-  if (!preedit) return;
+void print_composition(RimeComposition* composition) {
+  const char* preedit = composition->preedit;
+  if (!preedit)
+    return;
   size_t len = strlen(preedit);
   size_t start = composition->sel_start;
   size_t end = composition->sel_end;
@@ -65,38 +61,35 @@ void print_composition(RimeComposition *composition) {
         putchar(']');
       }
     }
-    if (i == cursor) putchar('|');
+    if (i == cursor)
+      putchar('|');
     if (i < len)
-        putchar(preedit[i]);
+      putchar(preedit[i]);
   }
   printf("\n");
 }
 
-void print_menu(RimeMenu *menu) {
-  if (menu->num_candidates == 0) return;
-  printf("page: %d%c (of size %d)\n",
-         menu->page_no + 1,
-         menu->is_last_page ? '$' : ' ',
-         menu->page_size);
+void print_menu(RimeMenu* menu) {
+  if (menu->num_candidates == 0)
+    return;
+  printf("page: %d%c (of size %d)\n", menu->page_no + 1,
+         menu->is_last_page ? '$' : ' ', menu->page_size);
   for (int i = 0; i < menu->num_candidates; ++i) {
     bool highlighted = i == menu->highlighted_candidate_index;
-    printf("%d. %c%s%c ",
-           (i + 1) % 10,
-           highlighted ? '[' : ' ',
-           menu->candidates[i].text,
-           highlighted ? ']' : ' ');
+    printf("%d. %c%s%c ", (i + 1) % 10, highlighted ? '[' : ' ',
+           menu->candidates[i].text, highlighted ? ']' : ' ');
     print_comment(menu->candidates[i].comment);
     putchar('\n');
   }
 }
 
-void print_context(RimeContext *context) {
-  if (context->composition.length > 0) {
+void print_context(RimeContext* context) {
+  if (context->composition.length > 0 || context->menu.num_candidates > 0) {
     print_composition(&context->composition);
-    print_menu(&context->menu);
   } else {
     printf("(not composing)\n");
   }
+  print_menu(&context->menu);
 }
 
 void print(RimeSessionId session_id) {
@@ -129,8 +122,8 @@ bool execute_special_command(const char* line, RimeSessionId session_id) {
     if (rime->get_schema_list(&list)) {
       printf("schema list:\n");
       for (size_t i = 0; i < list.size; ++i) {
-        printf("%lu. %s [%s]\n", (i + 1),
-               list.list[i].name, list.list[i].schema_id);
+        printf("%lu. %s [%s]\n", (i + 1), list.list[i].name,
+               list.list[i].schema_id);
       }
       rime->free_schema_list(&list);
     }
@@ -204,16 +197,14 @@ void on_message(void* context_object,
     const char* state_label =
         rime->get_state_label(session_id, option_name, state);
     if (state_label) {
-      printf("updated option: %s = %d // %s\n", option_name, state, state_label);
+      printf("updated option: %s = %d // %s\n", option_name, state,
+             state_label);
     }
   }
 }
 
-int main(int argc, char *argv[]) {
-#ifdef _WIN32
-  SetConsoleOutputCP(65001);
-#endif
-
+int main(int argc, char* argv[]) {
+  unsigned int codepage = SetConsoleOutputCodePage();
   RimeApi* rime = rime_get_api();
 
   RIME_STRUCT(RimeTraits, traits);
@@ -223,6 +214,7 @@ int main(int argc, char *argv[]) {
   rime->set_notification_handler(&on_message, NULL);
 
   fprintf(stderr, "initializing...\n");
+reload:
   rime->initialize(NULL);
   rime->start_quick();
   rime->deploy_config_file("common.yaml", "config_version");
@@ -238,13 +230,14 @@ int main(int argc, char *argv[]) {
   RimeSessionId session_id = rime->create_session();
   if (!session_id) {
     fprintf(stderr, "Error creating rime session.\n");
+    SetConsoleOutputCodePage(codepage);
     return 1;
   }
 
   const int kMaxLength = 99;
   char line[kMaxLength + 1] = {0};
   while (fgets(line, kMaxLength, stdin) != NULL) {
-    for (char *p = line; *p; ++p) {
+    for (char* p = line; *p; ++p) {
       if (*p == '\r' || *p == '\n') {
         *p = '\0';
         break;
@@ -252,6 +245,11 @@ int main(int argc, char *argv[]) {
     }
     if (!strcmp(line, "exit"))
       break;
+    else if (!strcmp(line, "reload")) {
+      rime->destroy_session(session_id);
+      rime->finalize();
+      goto reload;
+    }
     if (execute_special_command(line, session_id))
       continue;
     if (rime->simulate_key_sequence(session_id, line)) {
@@ -265,5 +263,6 @@ int main(int argc, char *argv[]) {
 
   rime->finalize();
 
+  SetConsoleOutputCodePage(codepage);
   return 0;
 }
