@@ -218,6 +218,7 @@ reload:
   rime->initialize(NULL);
   rime->start_quick();
   rime->deploy_config_file("common.yaml", "config_version");
+  rime->deploy_config_file("trime.yaml", "config_version");
   rime->deploy();
   rime->join_maintenance_thread();
   fprintf(stderr, "ready.\n");
