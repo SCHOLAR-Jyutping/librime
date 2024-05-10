@@ -113,6 +113,14 @@ void SchemaListTranslation::LoadSchemaList(Switcher* switcher) {
     return /* continue = */ true;
   });
   DLOG(INFO) << "num schemata: " << candies_.size();
+  if (candies_.size() == 1) {
+    bool hide_lone_schema = false;
+    config->GetBool("switcher/hide_lone_schema", &hide_lone_schema);
+    if (hide_lone_schema) {
+      Next();
+      return;
+    }
+  }
   bool fix_order = false;
   config->GetBool("switcher/fix_schema_list_order", &fix_order);
   if (fix_order)
