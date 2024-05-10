@@ -37,7 +37,9 @@ string Context::GetScriptText() const {
 static const string kCaretSymbol("\xe2\x80\xb8");  // U+2038 ‸ CARET
 
 string Context::GetSoftCursor() const {
-  return get_option("soft_cursor") ? kCaretSymbol : string();
+  return get_option("soft_cursor") && !composition_.back().HasTag("switcher")
+             ? kCaretSymbol
+             : string();
 }
 
 Preedit Context::GetPreedit() const {

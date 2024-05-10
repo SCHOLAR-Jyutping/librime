@@ -229,6 +229,7 @@ void Switcher::RefreshMenu() {
     // context_->set_input(" ");
     Segment seg(0, 0);  // empty range
     seg.prompt = caption_;
+    seg.tags.insert("switcher");
     comp.AddSegment(seg);
   }
   auto menu = New<Menu>();
