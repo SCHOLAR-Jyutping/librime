@@ -239,6 +239,7 @@ static void rime_candidate_copy(RimeCandidate* dest, const an<Candidate>& src) {
   } else {
     dest->comment = nullptr;
   }
+  dest->quality = src->quality();
   dest->reserved = nullptr;
 }
 

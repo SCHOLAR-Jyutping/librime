@@ -114,6 +114,7 @@ typedef struct {
 typedef struct rime_candidate_t {
   char* text;
   char* comment;
+  double quality;
   void* reserved;
 } RimeCandidate;
 

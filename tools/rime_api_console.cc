@@ -78,6 +78,7 @@ void print_menu(RimeMenu* menu) {
     bool highlighted = i == menu->highlighted_candidate_index;
     printf("%d. %c%s%c ", (i + 1) % 10, highlighted ? '[' : ' ',
            menu->candidates[i].text, highlighted ? ']' : ' ');
+    printf("%f ", menu->candidates[i].quality);
     print_comment(menu->candidates[i].comment);
     putchar('\n');
   }
