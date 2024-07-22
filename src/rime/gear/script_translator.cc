@@ -122,8 +122,8 @@ class ScriptTranslation : public Translation {
 
   size_t max_corrections_ = 4;
   size_t correction_count_ = 0;
-  size_t cand_count_ = 0;
 
+  bool first_cand_ = true;
   bool enable_correction_;
 };
 
@@ -388,6 +388,7 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
 }
 
 bool ScriptTranslation::Next() {
+  first_cand_ = false;
   bool is_correction;
   do {
     is_correction = false;
@@ -395,12 +396,10 @@ bool ScriptTranslation::Next() {
       return false;
     if (sentence_) {
       sentence_.reset();
-      ++cand_count_;
       return !CheckEmpty();
     }
     if (prediction_ && candidate_ == prediction_) {
       prediction_.reset();
-      ++cand_count_;
       return !CheckEmpty();
     }
     int phrase_code_length = 0;
@@ -431,7 +430,6 @@ bool ScriptTranslation::Next() {
   if (is_correction) {
     ++correction_count_;
   }
-  ++cand_count_;
   return !CheckEmpty();
 }
 
@@ -467,7 +465,7 @@ bool ScriptTranslation::PreferUserPhrase() {
     user_phrase_code_length = user_phrase_iter_->first;
     UserDictEntryIterator& uter = user_phrase_iter_->second;
     const auto& entry = uter.Peek();
-    user_phrase_weight = entry->weight + pow((double)cand_count_ / 8, 6);
+    user_phrase_weight = entry->weight;
   }
 
   int phrase_code_length = 0;
@@ -521,7 +519,7 @@ void ScriptTranslation::PrepareCandidate() {
                       (IsNormalSpelling() ? 0 : -1));
   }
   candidate_ =
-      prediction_ && cand_count_ &&
+      prediction_ && !first_cand_ &&
               (!cand || prediction_->weight() > cand->weight() ||
                (std::max)(user_phrase_code_length, phrase_code_length) <
                    syllabifier_->syllable_graph().interpreted_length)
