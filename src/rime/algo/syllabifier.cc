@@ -20,7 +20,7 @@ using VertexQueue =
     std::priority_queue<Vertex, vector<Vertex>, std::greater<Vertex>>;
 
 const double kPenaltyForAmbiguousSyllable = -0.6931471805599453;  // log(0.5)
-const double kCorrectionCredibility = -48.35428695287496;         // log(1e-21)
+const double kCorrectionCredibility = -6.907755278982137;         // log(0.001)
 const double kCompletionPenalty = -16.11809565095832;             // log(1e-7)
 const double kPenaltyForDisfavoredType = -32.23619130191664;      // log(1e-14)
 
