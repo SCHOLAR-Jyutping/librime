@@ -20,7 +20,7 @@ class Grammar : public Class<Grammar, Config*> {
                                 const DictEntry& entry,
                                 bool is_rear,
                                 Grammar* grammar) {
-    const double kPenalty = -64.47238260383328;  // log(1e-28)
+    const double kPenalty = -18.420680743952367;  // log(1e-8)
     return entry.weight + (grammar
                                ? grammar->Query(context, entry.text, is_rear)
                                : kPenalty * (entry.code.size() + 1));
