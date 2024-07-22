@@ -48,8 +48,8 @@ struct SyllabifyTask {
 static bool syllabify_dfs(SyllabifyTask* task,
                           size_t depth,
                           size_t current_pos) {
-  if (current_pos == task->target_pos) {
-    return true;
+  if (depth == task->code.size()) {
+    return current_pos == task->target_pos;
   }
   SyllableId syllable_id = task->code.at(depth);
   auto z = task->graph.edges.find(current_pos);
