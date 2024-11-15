@@ -65,7 +65,9 @@ class Script;
 
 class Prism : public MappedFile {
  public:
-  using Match = Darts::DoubleArray::result_pair_type;
+  struct Match : Darts::DoubleArray::result_pair_type {
+    size_t distance = 0;
+  };
 
   RIME_API explicit Prism(const path& file_path);
 

@@ -67,7 +67,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
         for (auto accessor = prism.QuerySpelling(m.first);
              !accessor.exhausted(); accessor.Next()) {
           if (accessor.properties().type == kNormalSpelling) {
-            matches.push_back({m.first, m.second.length});
+            matches.push_back({m.first, m.second.length, m.second.distance});
             break;
           }
         }
@@ -110,7 +110,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
                 continue;
               }
               props.is_correction = true;
-              props.credibility = kCorrectionCredibility;
+              props.credibility = kCorrectionCredibility * m.distance;
             }
             auto it = spellings.find(syllable_id);
             if (it == spellings.end()) {
