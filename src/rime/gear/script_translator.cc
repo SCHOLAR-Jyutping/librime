@@ -31,6 +31,8 @@
 
 namespace rime {
 
+const double e_sq_v = std::exp(2);
+
 namespace {
 
 struct SyllabifyTask {
@@ -122,8 +124,8 @@ class ScriptTranslation : public Translation {
 
   size_t max_corrections_ = 4;
   size_t correction_count_ = 0;
+  size_t cand_count_ = 0;
 
-  bool first_cand_ = true;
   bool enable_correction_;
 };
 
@@ -388,7 +390,6 @@ bool ScriptTranslation::Evaluate(Dictionary* dict, UserDictionary* user_dict) {
 }
 
 bool ScriptTranslation::Next() {
-  first_cand_ = false;
   bool is_correction;
   do {
     is_correction = false;
@@ -396,10 +397,12 @@ bool ScriptTranslation::Next() {
       return false;
     if (sentence_) {
       sentence_.reset();
+      ++cand_count_;
       return !CheckEmpty();
     }
     if (prediction_ && candidate_ == prediction_) {
       prediction_.reset();
+      ++cand_count_;
       return !CheckEmpty();
     }
     int phrase_code_length = 0;
@@ -430,6 +433,7 @@ bool ScriptTranslation::Next() {
   if (is_correction) {
     ++correction_count_;
   }
+  ++cand_count_;
   return !CheckEmpty();
 }
 
@@ -469,18 +473,16 @@ bool ScriptTranslation::PreferUserPhrase() {
   }
 
   int phrase_code_length = 0;
-  double phrase_weight = std::numeric_limits<double>::lowest();
   if (phrase_ && phrase_iter_ != phrase_->rend()) {
     phrase_code_length = phrase_iter_->first;
     DictEntryIterator& iter = phrase_iter_->second;
     const auto& entry = iter.Peek();
-    phrase_weight = entry->weight;
   }
 
   return user_phrase_code_length > 0 &&
          user_phrase_code_length >= phrase_code_length &&
          (user_phrase_code_length > phrase_code_length ||
-          user_phrase_weight >= phrase_weight);
+          cand_count_ >= e_sq_v - std::exp(user_phrase_weight + e_sq_v));
 }
 
 void ScriptTranslation::PrepareCandidate() {
@@ -519,7 +521,7 @@ void ScriptTranslation::PrepareCandidate() {
                       (IsNormalSpelling() ? 0 : -1));
   }
   candidate_ =
-      prediction_ && !first_cand_ &&
+      prediction_ && cand_count_ &&
               (!cand || prediction_->weight() > cand->weight() ||
                (std::max)(user_phrase_code_length, phrase_code_length) <
                    syllabifier_->syllable_graph().interpreted_length)
