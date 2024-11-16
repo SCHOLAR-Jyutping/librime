@@ -57,6 +57,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
     set<SyllableId> exact_match_syllables;
     auto current_input = input.substr(current_pos);
     prism.CommonPrefixSearch(current_input, &matches);
+    size_t min_distance = -1;
     if (corrector_) {
       for (auto& m : matches) {
         exact_match_syllables.insert(m.value);
@@ -68,6 +69,9 @@ int Syllabifier::BuildSyllableGraph(const string& input,
              !accessor.exhausted(); accessor.Next()) {
           if (accessor.properties().type == kNormalSpelling) {
             matches.push_back({m.first, m.second.length, m.second.distance});
+            if (m.second.distance < min_distance) {
+              min_distance = m.second.distance;
+            }
             break;
           }
         }
@@ -105,11 +109,12 @@ int Syllabifier::BuildSyllableGraph(const string& input,
             if (corrector_ && exact_match_syllables.find(m.value) ==
                                   exact_match_syllables.end()) {
               // Accept normal spellings only.
-              if (props.type != kNormalSpelling) {
+              if (props.type != kNormalSpelling || m.distance > min_distance) {
                 accessor.Next();
                 continue;
               }
               props.is_correction = true;
+              props.type = kCorrection;
               props.credibility = kCorrectionCredibility * m.distance;
             }
             auto it = spellings.find(syllable_id);
@@ -178,18 +183,15 @@ int Syllabifier::BuildSyllableGraph(const string& input,
       // when there is a path of more favored type
       SpellingType edge_type = kInvalidSpelling;
       for (auto k = j->second.begin(); k != j->second.end();) {
-        if (k->second.is_correction) {
-          ++k;
-          continue;  // Don't care correction edges
-        }
         if (k->second.type > min_edge_type) {
-          if (j->first < graph->edges[i].rbegin()->first) {
+          if (k->second.is_correction ||
+              j->first < graph->edges[i].rbegin()->first) {
             j->second.erase(k++);
             continue;
           } else {
             k->second.credibility += kPenaltyForDisfavoredType;
           }
-        } else if (k->second.type < edge_type) {
+        } else if (!k->second.is_correction && k->second.type < edge_type) {
           edge_type = k->second.type;
         }
         ++k;

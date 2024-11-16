@@ -14,6 +14,7 @@ namespace rime {
 
 enum SpellingType {
   kNormalSpelling,
+  kCorrection,
   kFuzzySpelling,
   kAbbreviation,
   kCompletion,
